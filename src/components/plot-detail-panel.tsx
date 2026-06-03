@@ -1,9 +1,11 @@
-import { X, User, MapPin, Phone, Mail, Home, FileText, Camera } from "lucide-react";
+import { useState } from "react";
+import { X, User, MapPin, Phone, Mail, Home, FileText, Camera, CalendarPlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ApertureDialog } from "@/components/aperture-dialog";
 import {
   statusColor,
   statusLabel,
