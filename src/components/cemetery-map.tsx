@@ -269,16 +269,38 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
+        style={{ perspective: "1400px", perspectiveOrigin: "50% 30%" }}
       >
         <svg
           width={LAYOUT.totalW}
           height={LAYOUT.totalH}
           style={{
-            transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
-            transformOrigin: "0 0",
-            transition: dragRef.current ? "none" : "transform 250ms ease",
+            transform: `translate(${tx}px, ${ty}px) scale(${scale}) ${is3D ? "rotateX(38deg) rotateZ(-2deg)" : ""}`,
+            transformOrigin: "50% 50%",
+            transformStyle: "preserve-3d",
+            transition: dragRef.current ? "none" : "transform 350ms ease",
+            filter: is3D
+              ? "drop-shadow(0 25px 35px rgba(0,0,0,0.55))"
+              : "drop-shadow(0 8px 16px rgba(0,0,0,0.3))",
           }}
         >
+          <defs>
+            <linearGradient id="cellHi" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="white" stopOpacity="0.35" />
+              <stop offset="55%" stopColor="white" stopOpacity="0" />
+            </linearGradient>
+            <linearGradient id="sectorBg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="oklch(0.26 0.04 250 / 0.85)" />
+              <stop offset="100%" stopColor="oklch(0.18 0.03 250 / 0.6)" />
+            </linearGradient>
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3" result="b" />
+              <feMerge>
+                <feMergeNode in="b" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
           {LAYOUT.sectors.map((sector) => {
             const meta = SECTORS.find((s) => s.id === sector.id)!;
             const plots = PLOTS.filter((p) => p.sectorId === sector.id);
