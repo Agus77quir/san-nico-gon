@@ -17,6 +17,9 @@ interface Props {
 }
 
 export function AppShell({ children, title, subtitle, actions }: Props) {
+  useEffect(() => {
+    startDemoStream();
+  }, []);
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -35,6 +38,7 @@ export function AppShell({ children, title, subtitle, actions }: Props) {
               )}
             </div>
             {actions}
+            <NotificationsBell />
           </header>
           <main className="flex-1 p-4 md:p-6">{children}</main>
         </SidebarInset>
