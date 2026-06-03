@@ -7,6 +7,7 @@ import {
   FileText,
   Settings,
   Shield,
+  ClipboardList,
 } from "lucide-react";
 
 import {
@@ -27,6 +28,7 @@ const mainItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Plano interactivo", url: "/plano", icon: Map },
   { title: "Parcelas", url: "/parcelas", icon: Grid3x3 },
+  { title: "Solicitudes", url: "/servicios", icon: ClipboardList },
   { title: "Fallecidos", url: "/fallecidos", icon: Users },
   { title: "Reportes", url: "/reportes", icon: FileText },
 ];

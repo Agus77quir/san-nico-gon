@@ -176,3 +176,22 @@
   -webkit-background-clip: text;
   color: transparent;
 }
+
+@media print {
+  [data-sidebar="sidebar"],
+  header.sticky,
+  .print\:hidden {
+    display: none !important;
+  }
+  body,
+  html {
+    background: white !important;
+    color: black !important;
+  }
+  .glass {
+    background: white !important;
+    box-shadow: none !important;
+    border-color: #ddd !important;
+    backdrop-filter: none !important;
+  }
+}
