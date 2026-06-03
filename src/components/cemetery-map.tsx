@@ -276,7 +276,7 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
           height={LAYOUT.totalH}
           style={{
             transform: `translate(${tx}px, ${ty}px) scale(${scale}) ${is3D ? "rotateX(38deg) rotateZ(-2deg)" : ""}`,
-            transformOrigin: "50% 50%",
+            transformOrigin: "0 0",
             transformStyle: "preserve-3d",
             transition: dragRef.current ? "none" : "transform 350ms ease",
             filter: is3D
