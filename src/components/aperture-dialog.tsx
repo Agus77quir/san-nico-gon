@@ -70,6 +70,11 @@ export function ApertureDialog({ plot, open, onOpenChange, onConfirm }: Props) {
     toast.success(`Apertura registrada en ${plot.code}`, {
       description: `Lugar ${spotIndex} — ${date}`,
     });
+    pushNotification({
+      kind: "success",
+      title: `Apertura en ${plot.code}`,
+      description: `${deceasedName.trim()} · Lugar ${spotIndex}`,
+    });
     onConfirm?.();
     onOpenChange(false);
   };
