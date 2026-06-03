@@ -358,17 +358,63 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
                       }}
                       onPointerLeave={() => setHover((h) => (h?.plot.id === p.id ? null : h))}
                     >
+                      {/* shadow base for 3D depth */}
+                      {is3D && (
+                        <rect
+                          x={1}
+                          y={3}
+                          width={CELL}
+                          height={CELL}
+                          rx={4}
+                          fill="rgba(0,0,0,0.55)"
+                        />
+                      )}
                       <rect
                         width={CELL}
                         height={CELL}
                         rx={4}
                         fill={statusColor(p.status)}
-                        opacity={isSelected ? 1 : 0.82}
-                        stroke={isSelected ? "white" : "oklch(1 0 0 / 0.1)"}
+                        opacity={isSelected ? 1 : 0.88}
+                        stroke={isSelected ? "white" : "oklch(1 0 0 / 0.12)"}
                         strokeWidth={isSelected ? 2 : 1}
+                        filter={isSelected ? "url(#glow)" : undefined}
                       >
-                        <title>{`${p.code} — ${p.type === "socio" ? "Socio" : "Municipal"}`}</title>
+                        <title>{`${p.code} — ${statusLabel(p.status)}`}</title>
                       </rect>
+                      {/* glossy highlight */}
+                      <rect
+                        width={CELL}
+                        height={CELL / 2}
+                        rx={4}
+                        fill="url(#cellHi)"
+                        pointerEvents="none"
+                      />
+                      {p.status === "partial" && (
+                        <circle
+                          cx={CELL / 2}
+                          cy={CELL / 2}
+                          r={CELL / 2}
+                          fill="none"
+                          stroke="white"
+                          strokeWidth={0.6}
+                          opacity={0.5}
+                        >
+                          <animate
+                            attributeName="r"
+                            from={CELL / 4}
+                            to={CELL / 1.6}
+                            dur="1.8s"
+                            repeatCount="indefinite"
+                          />
+                          <animate
+                            attributeName="opacity"
+                            from="0.7"
+                            to="0"
+                            dur="1.8s"
+                            repeatCount="indefinite"
+                          />
+                        </circle>
+                      )}
                       {p.type === "socio" && (
                         <circle
                           cx={CELL - 4}
