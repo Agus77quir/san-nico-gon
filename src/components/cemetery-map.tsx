@@ -312,8 +312,8 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
                   width={sector.width}
                   height={sector.height}
                   rx={14}
-                  fill="oklch(0.22 0.03 250 / 0.5)"
-                  stroke="oklch(1 0 0 / 0.08)"
+                  fill="url(#sectorBg)"
+                  stroke="oklch(1 0 0 / 0.12)"
                 />
                 <text
                   x={SECTOR_PADDING}
