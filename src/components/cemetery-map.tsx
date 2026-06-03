@@ -54,8 +54,26 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
   const [scale, setScale] = useState(0.9);
   const [tx, setTx] = useState(0);
   const [ty, setTy] = useState(0);
+  const [is3D, setIs3D] = useState(true);
   const dragRef = useRef<{ x: number; y: number; tx: number; ty: number; moved: boolean } | null>(null);
   const [hover, setHover] = useState<{ plot: Plot; x: number; y: number } | null>(null);
+
+  const notifications = useNotifications();
+  const liveStats = useMemo(() => {
+    const spotsTotal = PLOTS.length * 3;
+    const spotsOcc = PLOTS.reduce(
+      (n, p) => n + p.spots.filter((s) => s.occupant).length,
+      0,
+    );
+    return {
+      total: PLOTS.length,
+      occupied: PLOTS.filter((p) => p.status === "occupied").length,
+      partial: PLOTS.filter((p) => p.status === "partial").length,
+      available: PLOTS.filter((p) => p.status === "available").length,
+      occPct: Math.round((spotsOcc / spotsTotal) * 100),
+    };
+  }, [notifications]);
+  const lastEvent = notifications[0];
 
   const center = () => {
     const el = containerRef.current;
