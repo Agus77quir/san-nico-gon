@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState, type WheelEvent, type PointerEvent } from "react";
-import { Minus, Plus, Locate } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type WheelEvent, type PointerEvent } from "react";
+import { Minus, Plus, Locate, Box, Square, Activity } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { PLOTS, SECTORS, statusColor, statusLabel, type Plot } from "@/lib/demo-data";
+import { useNotifications } from "@/lib/notifications-store";
 
 interface Props {
   selectedId?: string;
