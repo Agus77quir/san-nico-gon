@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Plot } from "@/lib/demo-data";
+import { pushNotification } from "@/lib/notifications-store";
 
 interface Props {
   plot: Plot;
