@@ -179,11 +179,26 @@ export function PlotDetailPanel({ plot, onClose }: Props) {
         </div>
       </ScrollArea>
 
-      <div className="border-t border-border p-4">
-        <Button className="w-full bg-gradient-brand text-primary-foreground shadow-[var(--shadow-glow)] hover:opacity-90">
+      <div className="space-y-2 border-t border-border p-4">
+        {plot.spots.some((s) => !s.occupant) && (
+          <Button
+            onClick={() => setApertureOpen(true)}
+            className="w-full bg-gradient-brand text-primary-foreground shadow-[var(--shadow-glow)] hover:opacity-90"
+          >
+            <CalendarPlus className="mr-2 h-4 w-4" />
+            Abrir apertura ({plot.spots.filter((s) => !s.occupant).length} libre
+            {plot.spots.filter((s) => !s.occupant).length > 1 ? "s" : ""})
+          </Button>
+        )}
+        <Button variant="outline" className="w-full">
           Editar parcela
         </Button>
       </div>
+      <ApertureDialog
+        plot={plot}
+        open={apertureOpen}
+        onOpenChange={setApertureOpen}
+      />
     </aside>
   );
 }
