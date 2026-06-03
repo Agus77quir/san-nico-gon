@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type WheelEvent, type PointerEvent } from 
 import { Minus, Plus, Locate } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { PLOTS, SECTORS, statusColor, type Plot } from "@/lib/demo-data";
+import { PLOTS, SECTORS, statusColor, statusLabel, type Plot } from "@/lib/demo-data";
 
 interface Props {
   selectedId?: string;
@@ -53,7 +53,8 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
   const [scale, setScale] = useState(0.9);
   const [tx, setTx] = useState(0);
   const [ty, setTy] = useState(0);
-  const dragRef = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
+  const dragRef = useRef<{ x: number; y: number; tx: number; ty: number; moved: boolean } | null>(null);
+  const [hover, setHover] = useState<{ plot: Plot; x: number; y: number } | null>(null);
 
   const center = () => {
     const el = containerRef.current;
@@ -108,7 +109,7 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
 
   const onPointerDown = (e: PointerEvent) => {
     (e.target as Element).setPointerCapture?.(e.pointerId);
-    dragRef.current = { x: e.clientX, y: e.clientY, tx, ty };
+    dragRef.current = { x: e.clientX, y: e.clientY, tx, ty, moved: false };
   };
   const onPointerMove = (e: PointerEvent) => {
     if (!dragRef.current) return;
@@ -232,6 +233,25 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
                         e.stopPropagation();
                         onSelect(p);
                       }}
+                      onPointerEnter={(e) => {
+                        const rect = containerRef.current?.getBoundingClientRect();
+                        if (!rect) return;
+                        setHover({
+                          plot: p,
+                          x: e.clientX - rect.left,
+                          y: e.clientY - rect.top,
+                        });
+                      }}
+                      onPointerMove={(e) => {
+                        const rect = containerRef.current?.getBoundingClientRect();
+                        if (!rect) return;
+                        setHover((h) =>
+                          h && h.plot.id === p.id
+                            ? { ...h, x: e.clientX - rect.left, y: e.clientY - rect.top }
+                            : h,
+                        );
+                      }}
+                      onPointerLeave={() => setHover((h) => (h?.plot.id === p.id ? null : h))}
                     >
                       <rect
                         width={CELL}
@@ -262,6 +282,39 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
           })}
         </svg>
       </div>
+
+      {hover && (
+        <div
+          className="glass-strong pointer-events-none absolute z-20 min-w-[180px] rounded-lg border border-border px-3 py-2 text-xs shadow-lg"
+          style={{
+            left: Math.min(hover.x + 14, (containerRef.current?.clientWidth ?? 0) - 200),
+            top: Math.min(hover.y + 14, (containerRef.current?.clientHeight ?? 0) - 90),
+          }}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-semibold text-foreground">{hover.plot.code}</span>
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              {hover.plot.type === "socio" ? "Socio" : "Municipal"}
+            </span>
+          </div>
+          <div className="mt-1 flex items-center gap-1.5">
+            <span
+              className="h-2 w-2 rounded-full"
+              style={{ background: statusColor(hover.plot.status) }}
+            />
+            <span className="text-foreground">{statusLabel(hover.plot.status)}</span>
+          </div>
+          <div className="mt-0.5 text-muted-foreground">
+            {hover.plot.spots.filter((s) => !s.occupant).length} lugar(es) libre(s) de{" "}
+            {hover.plot.spots.length}
+          </div>
+          {hover.plot.spots.some((s) => !s.occupant) && (
+            <div className="mt-1 text-[10px] font-medium text-primary">
+              Click para abrir apertura
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
