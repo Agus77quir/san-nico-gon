@@ -53,7 +53,8 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
   const [scale, setScale] = useState(0.9);
   const [tx, setTx] = useState(0);
   const [ty, setTy] = useState(0);
-  const dragRef = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
+  const dragRef = useRef<{ x: number; y: number; tx: number; ty: number; moved: boolean } | null>(null);
+  const [hover, setHover] = useState<{ plot: Plot; x: number; y: number } | null>(null);
 
   const center = () => {
     const el = containerRef.current;
