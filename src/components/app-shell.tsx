@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import {
   SidebarProvider,
@@ -6,6 +6,8 @@ import {
   SidebarInset,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { NotificationsBell } from "@/components/notifications-bell";
+import { startDemoStream } from "@/lib/notifications-store";
 
 interface Props {
   children: ReactNode;
