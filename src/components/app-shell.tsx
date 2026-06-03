@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import {
   SidebarProvider,
@@ -6,6 +6,8 @@ import {
   SidebarInset,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { NotificationsBell } from "@/components/notifications-bell";
+import { startDemoStream } from "@/lib/notifications-store";
 
 interface Props {
   children: ReactNode;
@@ -15,6 +17,9 @@ interface Props {
 }
 
 export function AppShell({ children, title, subtitle, actions }: Props) {
+  useEffect(() => {
+    startDemoStream();
+  }, []);
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -33,6 +38,7 @@ export function AppShell({ children, title, subtitle, actions }: Props) {
               )}
             </div>
             {actions}
+            <NotificationsBell />
           </header>
           <main className="flex-1 p-4 md:p-6">{children}</main>
         </SidebarInset>

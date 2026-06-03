@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState, type WheelEvent, type PointerEvent } from "react";
-import { Minus, Plus, Locate } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type WheelEvent, type PointerEvent } from "react";
+import { Minus, Plus, Locate, Box, Square, Activity } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { PLOTS, SECTORS, statusColor, statusLabel, type Plot } from "@/lib/demo-data";
+import { useNotifications } from "@/lib/notifications-store";
 
 interface Props {
   selectedId?: string;
@@ -53,8 +54,26 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
   const [scale, setScale] = useState(0.9);
   const [tx, setTx] = useState(0);
   const [ty, setTy] = useState(0);
+  const [is3D, setIs3D] = useState(true);
   const dragRef = useRef<{ x: number; y: number; tx: number; ty: number; moved: boolean } | null>(null);
   const [hover, setHover] = useState<{ plot: Plot; x: number; y: number } | null>(null);
+
+  const notifications = useNotifications();
+  const liveStats = useMemo(() => {
+    const spotsTotal = PLOTS.length * 3;
+    const spotsOcc = PLOTS.reduce(
+      (n, p) => n + p.spots.filter((s) => s.occupant).length,
+      0,
+    );
+    return {
+      total: PLOTS.length,
+      occupied: PLOTS.filter((p) => p.status === "occupied").length,
+      partial: PLOTS.filter((p) => p.status === "partial").length,
+      available: PLOTS.filter((p) => p.status === "available").length,
+      occPct: Math.round((spotsOcc / spotsTotal) * 100),
+    };
+  }, [notifications]);
+  const lastEvent = notifications[0];
 
   const center = () => {
     const el = containerRef.current;
@@ -158,6 +177,70 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
         >
           <Locate className="h-4 w-4" />
         </Button>
+        <Button
+          size="icon"
+          variant={is3D ? "default" : "secondary"}
+          className="glass-strong h-9 w-9"
+          onClick={() => setIs3D((v) => !v)}
+          title={is3D ? "Vista plana" : "Vista 3D"}
+        >
+          {is3D ? <Square className="h-4 w-4" /> : <Box className="h-4 w-4" />}
+        </Button>
+      </div>
+
+      {/* Live HUD */}
+      <div className="glass-strong pointer-events-none absolute left-4 top-4 z-10 flex items-center gap-4 rounded-xl px-4 py-2.5 text-xs">
+        <div>
+          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+            Ocupación
+          </div>
+          <div className="text-lg font-semibold tabular-nums text-foreground">
+            {liveStats.occPct}%
+          </div>
+        </div>
+        <div className="h-8 w-px bg-border" />
+        <div className="flex gap-3">
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Libres
+            </div>
+            <div className="text-sm font-medium tabular-nums text-[var(--color-success)]">
+              {liveStats.available}
+            </div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Parc.
+            </div>
+            <div className="text-sm font-medium tabular-nums text-[var(--color-warning)]">
+              {liveStats.partial}
+            </div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Ocup.
+            </div>
+            <div className="text-sm font-medium tabular-nums text-destructive">
+              {liveStats.occupied}
+            </div>
+          </div>
+        </div>
+        {lastEvent && (
+          <>
+            <div className="h-8 w-px bg-border" />
+            <div className="flex items-center gap-1.5">
+              <Activity className="h-3 w-3 animate-pulse text-primary" />
+              <div className="max-w-[160px]">
+                <div className="truncate text-xs font-medium text-foreground">
+                  {lastEvent.title}
+                </div>
+                <div className="truncate text-[10px] text-muted-foreground">
+                  {lastEvent.description}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Legend */}
@@ -186,16 +269,38 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
+        style={{ perspective: "1400px", perspectiveOrigin: "50% 30%" }}
       >
         <svg
           width={LAYOUT.totalW}
           height={LAYOUT.totalH}
           style={{
-            transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
+            transform: `translate(${tx}px, ${ty}px) scale(${scale}) ${is3D ? "rotateX(38deg) rotateZ(-2deg)" : ""}`,
             transformOrigin: "0 0",
-            transition: dragRef.current ? "none" : "transform 250ms ease",
+            transformStyle: "preserve-3d",
+            transition: dragRef.current ? "none" : "transform 350ms ease",
+            filter: is3D
+              ? "drop-shadow(0 25px 35px rgba(0,0,0,0.55))"
+              : "drop-shadow(0 8px 16px rgba(0,0,0,0.3))",
           }}
         >
+          <defs>
+            <linearGradient id="cellHi" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="white" stopOpacity="0.35" />
+              <stop offset="55%" stopColor="white" stopOpacity="0" />
+            </linearGradient>
+            <linearGradient id="sectorBg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="oklch(0.26 0.04 250 / 0.85)" />
+              <stop offset="100%" stopColor="oklch(0.18 0.03 250 / 0.6)" />
+            </linearGradient>
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3" result="b" />
+              <feMerge>
+                <feMergeNode in="b" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
           {LAYOUT.sectors.map((sector) => {
             const meta = SECTORS.find((s) => s.id === sector.id)!;
             const plots = PLOTS.filter((p) => p.sectorId === sector.id);
@@ -207,8 +312,8 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
                   width={sector.width}
                   height={sector.height}
                   rx={14}
-                  fill="oklch(0.22 0.03 250 / 0.5)"
-                  stroke="oklch(1 0 0 / 0.08)"
+                  fill="url(#sectorBg)"
+                  stroke="oklch(1 0 0 / 0.12)"
                 />
                 <text
                   x={SECTOR_PADDING}
@@ -253,17 +358,63 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
                       }}
                       onPointerLeave={() => setHover((h) => (h?.plot.id === p.id ? null : h))}
                     >
+                      {/* shadow base for 3D depth */}
+                      {is3D && (
+                        <rect
+                          x={1}
+                          y={3}
+                          width={CELL}
+                          height={CELL}
+                          rx={4}
+                          fill="rgba(0,0,0,0.55)"
+                        />
+                      )}
                       <rect
                         width={CELL}
                         height={CELL}
                         rx={4}
                         fill={statusColor(p.status)}
-                        opacity={isSelected ? 1 : 0.82}
-                        stroke={isSelected ? "white" : "oklch(1 0 0 / 0.1)"}
+                        opacity={isSelected ? 1 : 0.88}
+                        stroke={isSelected ? "white" : "oklch(1 0 0 / 0.12)"}
                         strokeWidth={isSelected ? 2 : 1}
+                        filter={isSelected ? "url(#glow)" : undefined}
                       >
-                        <title>{`${p.code} — ${p.type === "socio" ? "Socio" : "Municipal"}`}</title>
+                        <title>{`${p.code} — ${statusLabel(p.status)}`}</title>
                       </rect>
+                      {/* glossy highlight */}
+                      <rect
+                        width={CELL}
+                        height={CELL / 2}
+                        rx={4}
+                        fill="url(#cellHi)"
+                        pointerEvents="none"
+                      />
+                      {p.status === "partial" && (
+                        <circle
+                          cx={CELL / 2}
+                          cy={CELL / 2}
+                          r={CELL / 2}
+                          fill="none"
+                          stroke="white"
+                          strokeWidth={0.6}
+                          opacity={0.5}
+                        >
+                          <animate
+                            attributeName="r"
+                            from={CELL / 4}
+                            to={CELL / 1.6}
+                            dur="1.8s"
+                            repeatCount="indefinite"
+                          />
+                          <animate
+                            attributeName="opacity"
+                            from="0.7"
+                            to="0"
+                            dur="1.8s"
+                            repeatCount="indefinite"
+                          />
+                        </circle>
+                      )}
                       {p.type === "socio" && (
                         <circle
                           cx={CELL - 4}
