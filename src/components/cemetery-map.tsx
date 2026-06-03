@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type WheelEvent, type PointerEvent } from 
 import { Minus, Plus, Locate } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { PLOTS, SECTORS, statusColor, type Plot } from "@/lib/demo-data";
+import { PLOTS, SECTORS, statusColor, statusLabel, type Plot } from "@/lib/demo-data";
 
 interface Props {
   selectedId?: string;
