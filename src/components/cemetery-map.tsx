@@ -109,7 +109,7 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
 
   const onPointerDown = (e: PointerEvent) => {
     (e.target as Element).setPointerCapture?.(e.pointerId);
-    dragRef.current = { x: e.clientX, y: e.clientY, tx, ty };
+    dragRef.current = { x: e.clientX, y: e.clientY, tx, ty, moved: false };
   };
   const onPointerMove = (e: PointerEvent) => {
     if (!dragRef.current) return;
