@@ -233,6 +233,25 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
                         e.stopPropagation();
                         onSelect(p);
                       }}
+                      onPointerEnter={(e) => {
+                        const rect = containerRef.current?.getBoundingClientRect();
+                        if (!rect) return;
+                        setHover({
+                          plot: p,
+                          x: e.clientX - rect.left,
+                          y: e.clientY - rect.top,
+                        });
+                      }}
+                      onPointerMove={(e) => {
+                        const rect = containerRef.current?.getBoundingClientRect();
+                        if (!rect) return;
+                        setHover((h) =>
+                          h && h.plot.id === p.id
+                            ? { ...h, x: e.clientX - rect.left, y: e.clientY - rect.top }
+                            : h,
+                        );
+                      }}
+                      onPointerLeave={() => setHover((h) => (h?.plot.id === p.id ? null : h))}
                     >
                       <rect
                         width={CELL}
