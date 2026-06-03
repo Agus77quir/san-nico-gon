@@ -177,6 +177,70 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
         >
           <Locate className="h-4 w-4" />
         </Button>
+        <Button
+          size="icon"
+          variant={is3D ? "default" : "secondary"}
+          className="glass-strong h-9 w-9"
+          onClick={() => setIs3D((v) => !v)}
+          title={is3D ? "Vista plana" : "Vista 3D"}
+        >
+          {is3D ? <Square className="h-4 w-4" /> : <Box className="h-4 w-4" />}
+        </Button>
+      </div>
+
+      {/* Live HUD */}
+      <div className="glass-strong pointer-events-none absolute left-4 top-4 z-10 flex items-center gap-4 rounded-xl px-4 py-2.5 text-xs">
+        <div>
+          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+            Ocupación
+          </div>
+          <div className="text-lg font-semibold tabular-nums text-foreground">
+            {liveStats.occPct}%
+          </div>
+        </div>
+        <div className="h-8 w-px bg-border" />
+        <div className="flex gap-3">
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Libres
+            </div>
+            <div className="text-sm font-medium tabular-nums text-[var(--color-success)]">
+              {liveStats.available}
+            </div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Parc.
+            </div>
+            <div className="text-sm font-medium tabular-nums text-[var(--color-warning)]">
+              {liveStats.partial}
+            </div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Ocup.
+            </div>
+            <div className="text-sm font-medium tabular-nums text-destructive">
+              {liveStats.occupied}
+            </div>
+          </div>
+        </div>
+        {lastEvent && (
+          <>
+            <div className="h-8 w-px bg-border" />
+            <div className="flex items-center gap-1.5">
+              <Activity className="h-3 w-3 animate-pulse text-primary" />
+              <div className="max-w-[160px]">
+                <div className="truncate text-xs font-medium text-foreground">
+                  {lastEvent.title}
+                </div>
+                <div className="truncate text-[10px] text-muted-foreground">
+                  {lastEvent.description}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Legend */}
