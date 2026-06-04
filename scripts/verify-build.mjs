@@ -6,7 +6,7 @@
  * Se ejecuta como postbuild (ver package.json) y también lo invoca
  * netlify.toml después de `vite build`.
  */
-import { existsSync, statSync, readdirSync } from "node:fs";
+import { existsSync, statSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const ROOT = resolve(process.cwd());
