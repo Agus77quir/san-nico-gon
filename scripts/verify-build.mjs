@@ -76,10 +76,7 @@ if (existsSync(PUBLISH_DIR)) {
   // Sanity check del HTML: debe enlazar al menos un módulo JS y al CSS.
   check("index.html enlaza JS y CSS", () => {
     if (!existsSync(join(PUBLISH_DIR, "index.html"))) return; // ya se reportó arriba
-    const html = require("node:fs").readFileSync(
-      join(PUBLISH_DIR, "index.html"),
-      "utf8",
-    );
+    const html = readFileSync(join(PUBLISH_DIR, "index.html"), "utf8");
     if (!/<script[^>]+type=["']module["']/i.test(html)) {
       throw new Error("index.html no contiene <script type=\"module\"> — el bundle no se cargará.");
     }
