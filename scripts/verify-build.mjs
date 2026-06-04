@@ -10,7 +10,8 @@ import { existsSync, statSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const ROOT = resolve(process.cwd());
-const PUBLISH_DIR = join(ROOT, "dist", "client");
+const PUBLISH_DIR = join(ROOT, "dist");
+const NETLIFY_FUNCTION = join(ROOT, ".netlify", "functions-internal", "server", "server.mjs");
 
 const REQUIRED_FILES = [
   "index.html",
@@ -50,7 +51,7 @@ if (existsSync(PUBLISH_DIR)) {
       const p = join(PUBLISH_DIR, file);
       if (!existsSync(p)) {
         throw new Error(
-          `falta ${file}. El SPA fallback de Netlify no podrá servirlo y todas las rutas darán 404.`,
+          `falta ${file}. Netlify no tendrá una entrada HTML válida y el sitio puede mostrar 404.`,
         );
       }
       const size = statSync(p).size;
@@ -84,6 +85,12 @@ if (existsSync(PUBLISH_DIR)) {
       warnings.push("index.html no enlaza ningún stylesheet — verifica estilos.");
     }
   });
+
+  check("función serverless de Netlify presente", () => {
+    if (!existsSync(NETLIFY_FUNCTION)) {
+      throw new Error(`falta ${NETLIFY_FUNCTION}. Las rutas SSR no funcionarán en Netlify.`);
+    }
+  });
 }
 
 if (warnings.length > 0) {
@@ -94,9 +101,6 @@ if (warnings.length > 0) {
 if (errors.length > 0) {
   console.error("\n❌ Build inválido — abortando antes del deploy:\n");
   for (const e of errors) console.error(`   - ${e}`);
-  console.error(
-    "\n💡 Si despliegas en Netlify y este proyecto necesita SSR, considera usar el botón Publish de Lovable.\n",
-  );
   process.exit(1);
 }
 
