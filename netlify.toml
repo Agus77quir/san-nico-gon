@@ -1,21 +1,20 @@
-## Netlify deployment config for this TanStack Start project.
-## El proyecto usa Nitro (vía @lovable.dev/vite-tanstack-config) que por defecto
-## construye para Cloudflare Workers. Aquí cambiamos el preset a "netlify" para
-## que el build genere funciones compatibles con Netlify automáticamente.
+## Netlify config para este proyecto TanStack Start.
+## La app no usa SSR ni server functions (todo es cliente + stores en memoria),
+## así que desplegamos los estáticos generados por `vite build` y hacemos
+## fallback SPA: cualquier ruta no-estática sirve index.html y el router de
+## TanStack toma el control en el cliente.
 
 [build]
   command = "bun run build"
   publish = "dist/client"
 
 [build.environment]
-  # Indica a Nitro que genere el bundle del servidor como Netlify Functions.
-  NITRO_PRESET = "netlify"
   NODE_VERSION = "20"
 
-# Nitro coloca el handler SSR aquí cuando preset=netlify.
-# Cualquier ruta no servida como archivo estático se redirige al handler.
+# SPA fallback: cualquier URL que no corresponda a un archivo estático
+# devuelve index.html con status 200 (no 301/302) para que el router
+# del cliente resuelva la ruta.
 [[redirects]]
   from = "/*"
-  to = "/.netlify/functions/server"
+  to = "/index.html"
   status = 200
-  force = false
