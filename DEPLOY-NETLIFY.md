@@ -6,7 +6,7 @@ Este proyecto está preparado para desplegarse en **Netlify** sin ajustes manual
 
 1. Conecta tu repo de GitHub en [app.netlify.com](https://app.netlify.com) → **Add new site → Import from Git**.
 2. Selecciona el repositorio. Netlify detectará `netlify.toml` automáticamente y usará:
-   - **Build command:** `bun run build`
+   - **Build command:** `bun run build:deploy`
    - **Publish directory:** `dist`
    - **NITRO_PRESET:** `netlify` (genera funciones serverless compatibles)
    - **Node:** 20
