@@ -5,7 +5,7 @@
 ## TanStack toma el control en el cliente.
 
 [build]
-  command = "bun run build"
+  command = "bun run build:deploy"
   publish = "dist/client"
 
 [build.environment]
