@@ -7,7 +7,7 @@ Este proyecto está preparado para desplegarse en **Netlify** sin ajustes manual
 1. Conecta tu repo de GitHub en [app.netlify.com](https://app.netlify.com) → **Add new site → Import from Git**.
 2. Selecciona el repositorio. Netlify detectará `netlify.toml` automáticamente y usará:
    - **Build command:** `bun run build`
-   - **Publish directory:** `dist/client`
+   - **Publish directory:** `dist`
    - **NITRO_PRESET:** `netlify` (genera funciones serverless compatibles)
    - **Node:** 20
 3. Pulsa **Deploy site**.
@@ -23,7 +23,7 @@ Luego dispara un nuevo deploy.
 ## Cómo funciona
 
 - El bundler (Vite + Nitro) construye dos salidas:
-  - `dist/client/` → estáticos servidos por la CDN de Netlify.
+  - `dist/` → estáticos servidos por la CDN de Netlify.
   - `.netlify/functions/server` → handler SSR de TanStack Start como función serverless.
 - El redirect `/* → /.netlify/functions/server` (definido en `netlify.toml`) envía a SSR cualquier ruta que no sea un archivo estático.
 
