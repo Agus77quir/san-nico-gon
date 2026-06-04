@@ -1,20 +1,17 @@
 ## Netlify config para este proyecto TanStack Start.
-## La app no usa SSR ni server functions (todo es cliente + stores en memoria),
-## así que desplegamos los estáticos generados por `vite build` y hacemos
-## fallback SPA: cualquier ruta no-estática sirve index.html y el router de
-## TanStack toma el control en el cliente.
+## Se fuerza Nitro en preset Netlify para generar el handler serverless y los
+## estáticos en `dist/`. Netlify servirá archivos estáticos primero y enviará
+## el resto de rutas al handler SSR.
 
 [build]
   command = "bun run build:deploy"
-  publish = "dist/client"
+  publish = "dist"
 
 [build.environment]
   NODE_VERSION = "20"
+  NITRO_PRESET = "netlify"
 
-# SPA fallback: cualquier URL que no corresponda a un archivo estático
-# devuelve index.html con status 200 (no 301/302) para que el router
-# del cliente resuelva la ruta.
 [[redirects]]
   from = "/*"
-  to = "/index.html"
+  to = "/.netlify/functions/server"
   status = 200
