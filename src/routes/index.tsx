@@ -67,7 +67,7 @@ function StatCard({
 function Dashboard() {
   const occupancyPct = Math.round((STATS.spotsOccupied / STATS.spotsTotal) * 100);
 
-  const sectorStats = SECTORS.map((s) => {
+  const sectorStats = SECTORS.filter((s) => s.shape !== "landmark" && s.shape !== "rotonda").map((s) => {
     const plots = PLOTS.filter((p) => p.sectorId === s.id);
     const occupied = plots.reduce(
       (n, p) => n + p.spots.filter((sp) => sp.occupant).length,
