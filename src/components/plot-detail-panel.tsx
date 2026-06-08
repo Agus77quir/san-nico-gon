@@ -36,7 +36,7 @@ export function PlotDetailPanel({ plot, onClose }: Props) {
   }
 
   return (
-    <aside className="glass flex h-full w-full shrink-0 flex-col rounded-2xl lg:w-[380px]">
+    <aside className="glass flex h-full w-full shrink-0 flex-col rounded-2xl md:w-[320px]">
       {/* Header */}
       <div className="relative overflow-hidden rounded-t-2xl border-b border-border p-5">
         <div
