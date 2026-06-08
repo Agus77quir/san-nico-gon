@@ -15,7 +15,7 @@ export function BrandLogo({ className, showText = true, size = 36 }: Props) {
         style={{ width: size, height: size }}
       >
         <img
-          src={logoAsset.url}
+          src={logoUrl}
           alt="San Nicolás - Renacimiento"
           className="h-full w-full object-contain"
         />
