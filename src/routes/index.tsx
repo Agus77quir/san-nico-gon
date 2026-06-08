@@ -8,6 +8,13 @@ import {
   TrendingUp,
   Map,
 } from "lucide-react";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  ResponsiveContainer,
+} from "recharts";
 
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
