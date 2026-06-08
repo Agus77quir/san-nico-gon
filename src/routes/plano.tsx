@@ -1,8 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-
-import { useSidebar } from "@/components/ui/sidebar";
 
 import { AppShell } from "@/components/app-shell";
 import { CemeteryMap } from "@/components/cemetery-map";
@@ -60,6 +58,7 @@ function PlanoPage() {
     <AppShell
       title="Plano interactivo"
       subtitle="Zoom, arrastra y selecciona una parcela"
+      sidebarDefaultOpen={false}
       actions={
         <div className="relative w-full max-w-md">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -113,7 +112,6 @@ function PlanoPage() {
       }
     >
       <div className="relative flex h-full min-h-0 flex-col gap-4 md:flex-row">
-        <AutoCollapseSidebar />
         <div className="min-h-[320px] flex-1">
           <CemeteryMap
             selectedId={selected?.id}
@@ -125,13 +123,4 @@ function PlanoPage() {
       </div>
     </AppShell>
   );
-}
-
-function AutoCollapseSidebar() {
-  const { setOpen, setOpenMobile, isMobile } = useSidebar();
-  useEffect(() => {
-    if (isMobile) setOpenMobile(false);
-    else setOpen(false);
-  }, [isMobile, setOpen, setOpenMobile]);
-  return null;
 }
