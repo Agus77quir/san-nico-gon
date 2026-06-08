@@ -21,7 +21,7 @@ export function PlotDetailPanel({ plot, onClose }: Props) {
   const [apertureOpen, setApertureOpen] = useState(false);
   if (!plot) {
     return (
-      <aside className="glass hidden h-full w-[380px] shrink-0 flex-col items-center justify-center rounded-2xl p-8 text-center lg:flex">
+      <aside className="glass hidden h-full w-[320px] shrink-0 flex-col items-center justify-center rounded-2xl p-8 text-center md:flex">
         <div className="rounded-full bg-accent/30 p-4">
           <MapPin className="h-6 w-6 text-muted-foreground" />
         </div>
