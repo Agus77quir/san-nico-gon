@@ -22,10 +22,10 @@ export function AppShell({ children, title, subtitle, actions }: Props) {
   }, []);
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+      <div className="flex h-screen w-full overflow-hidden">
         <AppSidebar />
-        <SidebarInset className="bg-transparent">
-          <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border bg-background/60 px-4 backdrop-blur-xl md:px-6">
+        <SidebarInset className="flex h-screen min-h-0 flex-col bg-transparent">
+          <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 border-b border-border bg-background/60 px-4 backdrop-blur-xl md:px-6">
             <SidebarTrigger />
             <div className="flex flex-1 items-baseline gap-3">
               <h1 className="text-lg font-semibold tracking-tight text-foreground">
@@ -40,7 +40,7 @@ export function AppShell({ children, title, subtitle, actions }: Props) {
             {actions}
             <NotificationsBell />
           </header>
-          <main className="flex-1 p-4 md:p-6">{children}</main>
+          <main className="min-h-0 flex-1 overflow-auto p-4 md:p-6">{children}</main>
         </SidebarInset>
       </div>
     </SidebarProvider>
