@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, User, MapPin, Phone, Mail, Home, FileText, Camera, CalendarPlus } from "lucide-react";
+import { X, User, MapPin, Phone, Mail, Home, FileText, Camera, CalendarPlus, Hash, Users, Layers, Clock, Activity } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
