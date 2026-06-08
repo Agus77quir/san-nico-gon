@@ -27,12 +27,12 @@ export function AppShell({ children, title, subtitle, actions }: Props) {
         <SidebarInset className="flex h-screen min-h-0 flex-col bg-transparent">
           <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 border-b border-border bg-background/60 px-4 backdrop-blur-xl md:px-6">
             <SidebarTrigger />
-            <div className="flex min-w-0 shrink items-baseline gap-3">
+            <div className="hidden min-w-0 shrink items-baseline gap-3 md:flex">
               <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">
                 {title}
               </h1>
               {subtitle && (
-                <span className="hidden truncate text-xs text-muted-foreground lg:inline">
+                <span className="hidden truncate text-xs text-muted-foreground xl:inline">
                   {subtitle}
                 </span>
               )}
