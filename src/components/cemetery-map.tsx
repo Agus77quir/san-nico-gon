@@ -260,7 +260,7 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
   );
 
   return (
-    <div className="relative h-full w-full overflow-hidden rounded-2xl border border-border bg-[radial-gradient(circle_at_20%_10%,oklch(0.62_0.18_235/0.08),transparent_60%),radial-gradient(circle_at_80%_90%,oklch(0.42_0.12_250/0.1),transparent_60%)]">
+    <div className="relative h-full w-full min-w-0 overflow-hidden rounded-2xl border border-border bg-[radial-gradient(circle_at_20%_10%,oklch(0.62_0.18_235/0.08),transparent_60%),radial-gradient(circle_at_80%_90%,oklch(0.42_0.12_250/0.1),transparent_60%)]">
       {/* CSS para resaltar parcelas parciales sin SMIL */}
       <style>{`
         @keyframes plot-pulse { 0%,100% { opacity: .25 } 50% { opacity: .7 } }
@@ -570,6 +570,7 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
                       key={p.id}
                       transform={`translate(${x},${y})`}
                       style={{ cursor: "pointer" }}
+                      onPointerDown={(e) => e.stopPropagation()}
                       onClick={(e) => {
                         e.stopPropagation();
                         onSelect(p);

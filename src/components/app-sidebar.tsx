@@ -21,6 +21,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { BrandLogo } from "@/components/brand-logo";
 
@@ -39,6 +40,8 @@ const adminItems = [
 ];
 
 export function AppSidebar() {
+  const { state } = useSidebar();
+  const collapsed = state === "collapsed";
   const currentPath = useRouterState({
     select: (router) => router.location.pathname,
   });
@@ -48,7 +51,7 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="px-3 pt-4 pb-2">
-        <BrandLogo />
+        <BrandLogo showText={!collapsed} />
       </SidebarHeader>
 
       <SidebarContent className="px-2">
@@ -67,7 +70,7 @@ export function AppSidebar() {
                   >
                     <Link to={item.url} className="flex items-center gap-3">
                       <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      {!collapsed && <span>{item.title}</span>}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -91,7 +94,7 @@ export function AppSidebar() {
                   >
                     <Link to={item.url} className="flex items-center gap-3">
                       <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      {!collapsed && <span>{item.title}</span>}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -102,7 +105,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-3">
-        <div className="rounded-lg border border-border bg-card/40 p-3 text-xs text-muted-foreground">
+        <div className="rounded-lg border border-border bg-card/40 p-3 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
           <div className="font-medium text-foreground">v1.0 · Demo</div>
           <div className="mt-1">Datos de muestra — UI primero</div>
         </div>

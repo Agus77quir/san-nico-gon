@@ -14,14 +14,15 @@ interface Props {
   title: string;
   subtitle?: string;
   actions?: ReactNode;
+  sidebarDefaultOpen?: boolean;
 }
 
-export function AppShell({ children, title, subtitle, actions }: Props) {
+export function AppShell({ children, title, subtitle, actions, sidebarDefaultOpen = true }: Props) {
   useEffect(() => {
     startDemoStream();
   }, []);
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={sidebarDefaultOpen}>
       <div className="flex h-screen w-full overflow-hidden">
         <AppSidebar />
         <SidebarInset className="flex h-screen min-h-0 flex-col bg-transparent">
