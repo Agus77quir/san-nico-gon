@@ -11,16 +11,16 @@ interface Props {
   focusId?: string;
 }
 
-const CELL = 20;
+const CELL = 22;
 const GAP = 3;
-const SECTOR_PADDING_X = 16;
-const SECTOR_PADDING_TOP = 26;
-const SECTOR_PADDING_BOTTOM = 10;
-const TEMPLO_W = 170;
-const TEMPLO_H = 220;
-const ROTONDA_SIZE = 260;
+const SECTOR_PADDING_X = 14;
+const SECTOR_PADDING_TOP = 24;
+const SECTOR_PADDING_BOTTOM = 8;
+const TEMPLO_W = 180;
+const TEMPLO_H = 230;
+const ROTONDA_SIZE = 280;
 const AVENIDA_Y = 250;
-const AVENIDA_H = 16;
+const AVENIDA_H = 18;
 
 interface SectorBox {
   sector: Sector;
