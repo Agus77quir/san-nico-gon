@@ -35,18 +35,56 @@ export interface Plot {
   holder?: Holder;
 }
 
+export type SectorShape = "grid" | "landmark" | "rotonda";
+
 export interface Sector {
   id: string;
   name: string;
+  /** world-coord x in px (left edge of sector bounding box) */
+  x: number;
+  /** world-coord y in px (top edge of sector bounding box) */
+  y: number;
   rows: number;
   cols: number;
+  shape?: SectorShape;
+  /** descriptive label for landmarks */
+  landmark?: string;
 }
 
+/**
+ * Layout reproduce el plano real del Cementerio Parque San Nicolás Renacimiento:
+ *  - Templo Ecuménico al oeste
+ *  - S1a / S1b en herradura alrededor del templo
+ *  - S1 pequeño junto al templo
+ *  - Avenida Principal horizontal en el centro
+ *  - S2..S6 al sur de la avenida, S2a..S6a al norte
+ *  - S12 rotonda al este (sala de máquinas y cisterna)
+ */
 export const SECTORS: Sector[] = [
-  { id: "A", name: "Sector A — Renacimiento", rows: 6, cols: 10 },
-  { id: "B", name: "Sector B — San Nicolás", rows: 5, cols: 8 },
-  { id: "C", name: "Sector C — Jardín Norte", rows: 4, cols: 12 },
-  { id: "D", name: "Sector D — Familias", rows: 5, cols: 6 },
+  // Landmarks
+  { id: "TEMPLO", name: "Templo Ecuménico", x: 0, y: 110, rows: 0, cols: 0, shape: "landmark", landmark: "TEMPLO ECUMÉNICO" },
+  { id: "ROTONDA", name: "Rotonda · Sala de Máquinas", x: 2050, y: 80, rows: 0, cols: 0, shape: "rotonda", landmark: "ROTONDA" },
+
+  // Núcleo oeste — herradura
+  { id: "S1a", name: "S1a — Herradura Norte", x: 180, y: 10, rows: 4, cols: 7 },
+  { id: "S1b", name: "S1b — Herradura Sur", x: 180, y: 270, rows: 4, cols: 7 },
+  { id: "S1",  name: "S1 — Plazoleta", x: 360, y: 165, rows: 2, cols: 2 },
+
+  // Tramo central — norte / sur de la Avenida Principal
+  { id: "S2a", name: "S2a — Norte", x: 470, y: 10,  rows: 4, cols: 8 },
+  { id: "S2",  name: "S2 — Sur",   x: 470, y: 270, rows: 4, cols: 8 },
+
+  { id: "S3a", name: "S3a — Norte", x: 720, y: 10,  rows: 5, cols: 10 },
+  { id: "S3",  name: "S3 — Sur",   x: 720, y: 270, rows: 5, cols: 10 },
+
+  { id: "S4a", name: "S4a — Norte", x: 1020, y: 10,  rows: 6, cols: 12 },
+  { id: "S4",  name: "S4 — Sur",   x: 1020, y: 270, rows: 6, cols: 12 },
+
+  { id: "S5a", name: "S5a — Norte", x: 1380, y: 10,  rows: 6, cols: 14 },
+  { id: "S5",  name: "S5 — Sur",   x: 1380, y: 270, rows: 6, cols: 14 },
+
+  { id: "S6a", name: "S6a — Norte", x: 1790, y: 10,  rows: 5, cols: 8 },
+  { id: "S6",  name: "S6 — Sur",   x: 1790, y: 270, rows: 5, cols: 8 },
 ];
 
 const NAMES = [
@@ -87,8 +125,7 @@ let plotCounter = 0;
 
 function buildPlot(sectorId: string, row: number, col: number, seed: number): Plot {
   plotCounter++;
-  const type: PlotType = sectorId === "D" || seed % 3 === 0 ? "socio" : "municipal";
-  // distribute statuses
+  const type: PlotType = seed % 3 === 0 ? "socio" : "municipal";
   const r = seed % 10;
   const occupiedCount = r < 3 ? 0 : r < 6 ? 1 : r < 8 ? 2 : 3;
   const reserved = r === 9 && occupiedCount === 0;
@@ -108,9 +145,13 @@ function buildPlot(sectorId: string, row: number, col: number, seed: number): Pl
       ? "occupied"
       : "partial";
 
+  // Código tipo S4-F3-12 (Sector - Fila - Plot)
+  const fileLabel = `F${col + 1}`;
+  const code = `${sectorId}-${fileLabel}-${String(row + 1).padStart(2, "0")}`;
+
   return {
     id: `${sectorId}-${row}-${col}`,
-    code: `${sectorId}-${String(plotCounter).padStart(3, "0")}`,
+    code,
     sectorId,
     row,
     col,
@@ -126,6 +167,7 @@ export const PLOTS: Plot[] = (() => {
   const out: Plot[] = [];
   let seed = 1;
   for (const s of SECTORS) {
+    if (s.shape === "landmark" || s.shape === "rotonda") continue;
     for (let r = 0; r < s.rows; r++) {
       for (let c = 0; c < s.cols; c++) {
         out.push(buildPlot(s.id, r, c, seed++));
