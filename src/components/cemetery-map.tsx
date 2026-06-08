@@ -11,16 +11,16 @@ interface Props {
   focusId?: string;
 }
 
-const CELL = 20;
+const CELL = 22;
 const GAP = 3;
-const SECTOR_PADDING_X = 16;
-const SECTOR_PADDING_TOP = 26;
-const SECTOR_PADDING_BOTTOM = 10;
-const TEMPLO_W = 170;
-const TEMPLO_H = 220;
-const ROTONDA_SIZE = 260;
+const SECTOR_PADDING_X = 14;
+const SECTOR_PADDING_TOP = 24;
+const SECTOR_PADDING_BOTTOM = 8;
+const TEMPLO_W = 180;
+const TEMPLO_H = 230;
+const ROTONDA_SIZE = 280;
 const AVENIDA_Y = 250;
-const AVENIDA_H = 16;
+const AVENIDA_H = 18;
 
 interface SectorBox {
   sector: Sector;
@@ -83,14 +83,15 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
     const el = containerRef.current;
     if (!el) return;
     const { clientWidth, clientHeight } = el;
-    const s = Math.min(
-      (clientWidth - 60) / LAYOUT.totalW,
-      (clientHeight - 60) / LAYOUT.totalH,
-      1.2,
-    );
-    setScale(Math.max(0.25, s));
-    setTx((clientWidth - LAYOUT.totalW * s) / 2);
-    setTy((clientHeight - LAYOUT.totalH * s) / 2);
+    // Con la inclinación 3D la altura del plano se reduce ~70%, así que ajustamos al ancho
+    // pero permitiendo un zoom inicial más grande y realista.
+    const fitW = (clientWidth - 40) / LAYOUT.totalW;
+    const fitH = (clientHeight - 40) / (LAYOUT.totalH * 0.75);
+    const s = Math.min(Math.max(fitW, fitH * 0.9), 1.6);
+    const finalScale = Math.max(0.35, s);
+    setScale(finalScale);
+    setTx((clientWidth - LAYOUT.totalW * finalScale) / 2);
+    setTy((clientHeight - LAYOUT.totalH * finalScale) / 2);
   };
 
   useEffect(() => {
@@ -243,7 +244,7 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
           width={LAYOUT.totalW}
           height={LAYOUT.totalH}
           style={{
-            transform: `translate(${tx}px, ${ty}px) scale(${scale}) ${is3D ? "rotateX(46deg) rotateZ(-3deg)" : ""}`,
+            transform: `translate(${tx}px, ${ty}px) scale(${scale}) ${is3D ? "rotateX(38deg) rotateZ(-2deg)" : ""}`,
             transformOrigin: "0 0",
             transformStyle: "preserve-3d",
             transition: dragRef.current ? "none" : "transform 350ms ease",
@@ -318,31 +319,82 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
             const s = box.sector;
 
             if (s.shape === "landmark") {
+              // Iglesia / Templo Ecuménico — silueta arquitectónica
+              const w = box.width;
+              const h = box.height;
+              const naveW = w * 0.55;
+              const naveX = (w - naveW) / 2;
+              const naveY = h * 0.22;
+              const naveH = h * 0.55;
+              const apseR = naveW / 2;
               return (
                 <g key={s.id} transform={`translate(${box.x},${box.y})`}>
+                  {/* Parcela / jardín alrededor */}
                   {is3D && (
-                    <rect x={4} y={6} width={box.width} height={box.height} rx={10} fill="rgba(0,0,0,0.55)" />
+                    <rect x={4} y={6} width={w} height={h} rx={14} fill="rgba(0,0,0,0.5)" />
                   )}
+                  <rect width={w} height={h} rx={14} fill="oklch(0.32 0.05 145 / 0.35)" stroke="oklch(0.7 0.1 145 / 0.3)" />
+                  {/* Caminito de entrada */}
+                  <rect x={w / 2 - 8} y={h - 40} width={16} height={36} fill="oklch(0.65 0.02 60 / 0.5)" />
+                  {/* Árboles */}
+                  {[0.15, 0.85].map((fx, i) => (
+                    <g key={i}>
+                      <circle cx={w * fx} cy={h * 0.18} r={7} fill="oklch(0.48 0.12 145)" stroke="oklch(0.7 0.15 145)" strokeWidth={0.5} />
+                      <circle cx={w * fx} cy={h * 0.82} r={7} fill="oklch(0.48 0.12 145)" stroke="oklch(0.7 0.15 145)" strokeWidth={0.5} />
+                    </g>
+                  ))}
+                  {/* Nave */}
                   <rect
-                    width={box.width}
-                    height={box.height}
-                    rx={10}
+                    x={naveX}
+                    y={naveY}
+                    width={naveW}
+                    height={naveH}
                     fill="url(#temploBg)"
-                    stroke="oklch(0.85 0.08 70 / 0.5)"
+                    stroke="oklch(0.9 0.06 70 / 0.6)"
+                    strokeWidth={1}
                   />
-                  {/* cruz simbólica */}
-                  <g transform={`translate(${box.width / 2},${box.height / 2})`}>
-                    <rect x={-3} y={-30} width={6} height={60} rx={1} fill="oklch(0.95 0.04 70)" opacity={0.8} />
-                    <rect x={-16} y={-12} width={32} height={6} rx={1} fill="oklch(0.95 0.04 70)" opacity={0.8} />
+                  {/* Techo a dos aguas (banda más oscura) */}
+                  <polygon
+                    points={`${naveX - 4},${naveY} ${naveX + naveW + 4},${naveY} ${naveX + naveW / 2},${naveY - 18}`}
+                    fill="oklch(0.32 0.07 60 / 0.95)"
+                    stroke="oklch(0.85 0.06 70 / 0.5)"
+                  />
+                  {/* Ábside semicircular */}
+                  <path
+                    d={`M ${naveX},${naveY + naveH} a ${apseR},${apseR * 0.55} 0 0 0 ${naveW},0`}
+                    fill="url(#temploBg)"
+                    stroke="oklch(0.9 0.06 70 / 0.6)"
+                  />
+                  {/* Ventanas */}
+                  {[0.25, 0.5, 0.75].map((fy) => (
+                    <g key={fy}>
+                      <rect x={naveX + 6} y={naveY + naveH * fy - 6} width={5} height={12} rx={2} fill="oklch(0.85 0.1 230 / 0.7)" />
+                      <rect x={naveX + naveW - 11} y={naveY + naveH * fy - 6} width={5} height={12} rx={2} fill="oklch(0.85 0.1 230 / 0.7)" />
+                    </g>
+                  ))}
+                  {/* Torre/campanario */}
+                  <rect x={w / 2 - 9} y={naveY - 46} width={18} height={32} fill="oklch(0.42 0.07 60 / 0.95)" stroke="oklch(0.85 0.06 70 / 0.6)" />
+                  <polygon
+                    points={`${w / 2 - 12},${naveY - 46} ${w / 2 + 12},${naveY - 46} ${w / 2},${naveY - 64}`}
+                    fill="oklch(0.32 0.07 60)"
+                    stroke="oklch(0.85 0.06 70 / 0.6)"
+                  />
+                  {/* Cruz sobre el campanario */}
+                  <g transform={`translate(${w / 2},${naveY - 76})`}>
+                    <rect x={-1} y={-8} width={2} height={14} fill="oklch(0.96 0.04 70)" />
+                    <rect x={-4} y={-3} width={8} height={2} fill="oklch(0.96 0.04 70)" />
                   </g>
+                  {/* Puerta */}
+                  <rect x={w / 2 - 5} y={naveY + naveH - 14} width={10} height={14} rx={1} fill="oklch(0.22 0.04 60)" stroke="oklch(0.85 0.06 70 / 0.5)" />
+                  {/* Etiqueta */}
                   <text
-                    x={box.width / 2}
-                    y={box.height - 16}
+                    x={w / 2}
+                    y={h - 6}
                     textAnchor="middle"
                     fill="oklch(0.95 0.04 70)"
-                    fontSize={11}
-                    fontWeight={600}
-                    style={{ letterSpacing: "0.15em" }}
+                    fontSize={9}
+                    fontWeight={700}
+                    style={{ letterSpacing: "0.18em" }}
                   >
                     {s.landmark}
                   </text>
@@ -353,27 +405,65 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
             if (s.shape === "rotonda") {
               const cx = box.width / 2;
               const cy = box.height / 2;
+              const R = box.width / 2;
               return (
                 <g key={s.id} transform={`translate(${box.x},${box.y})`}>
-                  {is3D && (
-                    <circle cx={cx + 4} cy={cy + 6} r={box.width / 2} fill="rgba(0,0,0,0.55)" />
-                  )}
-                  <circle cx={cx} cy={cy} r={box.width / 2} fill="url(#rotondaBg)" stroke="oklch(1 0 0 / 0.18)" />
-                  <circle cx={cx} cy={cy} r={box.width / 2 - 18} fill="none" stroke="oklch(1 0 0 / 0.15)" strokeDasharray="3 4" />
-                  {/* sala de máquinas */}
-                  <rect x={cx - 38} y={cy - 20} width={50} height={30} rx={3} fill="oklch(0.35 0.04 240 / 0.85)" stroke="oklch(1 0 0 / 0.2)" />
-                  <text x={cx - 13} y={cy - 2} textAnchor="middle" fill="oklch(0.85 0.02 240)" fontSize={5}>SALA DE MÁQUINAS</text>
-                  {/* cisterna */}
-                  <circle cx={cx + 25} cy={cy + 25} r={18} fill="oklch(0.4 0.12 230 / 0.55)" stroke="oklch(0.7 0.15 230 / 0.5)" />
-                  <text x={cx + 25} y={cy + 27} textAnchor="middle" fill="oklch(0.92 0.04 230)" fontSize={5}>CISTERNA</text>
+                  {is3D && <circle cx={cx + 4} cy={cy + 6} r={R} fill="rgba(0,0,0,0.55)" />}
+                  {/* Césped exterior */}
+                  <circle cx={cx} cy={cy} r={R} fill="oklch(0.3 0.05 145 / 0.4)" stroke="oklch(0.7 0.1 145 / 0.3)" />
+                  {/* Anillo de calzada */}
+                  <circle cx={cx} cy={cy} r={R - 10} fill="none" stroke="oklch(0.55 0.02 240 / 0.8)" strokeWidth={18} />
+                  <circle cx={cx} cy={cy} r={R - 10} fill="none" stroke="oklch(0.85 0.04 240 / 0.5)" strokeWidth={0.6} strokeDasharray="4 5" />
+                  {/* Caminos radiales (acceso desde la avenida y desde el oeste) */}
+                  {[0, 90, 180, 270].map((deg) => {
+                    const rad = (deg * Math.PI) / 180;
+                    return (
+                      <line
+                        key={deg}
+                        x1={cx + Math.cos(rad) * (R - 30)}
+                        y1={cy + Math.sin(rad) * (R - 30)}
+                        x2={cx + Math.cos(rad) * R}
+                        y2={cy + Math.sin(rad) * R}
+                        stroke="oklch(0.6 0.02 240 / 0.75)"
+                        strokeWidth={10}
+                      />
+                    );
+                  })}
+                  {/* Isla central */}
+                  <circle cx={cx} cy={cy} r={R - 45} fill="url(#rotondaBg)" stroke="oklch(1 0 0 / 0.18)" />
+                  <circle cx={cx} cy={cy} r={R - 60} fill="none" stroke="oklch(0.7 0.1 145 / 0.4)" strokeDasharray="2 3" />
+                  {/* Sala de máquinas */}
+                  <rect x={cx - 42} y={cy - 26} width={50} height={32} rx={3} fill="oklch(0.38 0.04 240 / 0.95)" stroke="oklch(1 0 0 / 0.25)" />
+                  <polygon points={`${cx - 44},${cy - 26} ${cx + 10},${cy - 26} ${cx - 17},${cy - 34}`} fill="oklch(0.28 0.05 60 / 0.95)" />
+                  <text x={cx - 17} y={cy - 12} textAnchor="middle" fill="oklch(0.85 0.02 240)" fontSize={4.5} fontWeight={600}>SALA DE</text>
+                  <text x={cx - 17} y={cy - 6} textAnchor="middle" fill="oklch(0.85 0.02 240)" fontSize={4.5} fontWeight={600}>MÁQUINAS</text>
+                  {/* Cisterna */}
+                  <circle cx={cx + 28} cy={cy + 22} r={20} fill="oklch(0.4 0.13 230 / 0.65)" stroke="oklch(0.75 0.18 230 / 0.6)" />
+                  <circle cx={cx + 28} cy={cy + 22} r={14} fill="none" stroke="oklch(0.85 0.15 230 / 0.4)" strokeWidth={0.5} />
+                  <text x={cx + 28} y={cy + 24} textAnchor="middle" fill="oklch(0.95 0.05 230)" fontSize={5} fontWeight={600}>CISTERNA</text>
+                  {/* Árboles alrededor */}
+                  {[30, 60, 120, 150, 210, 240, 300, 330].map((deg) => {
+                    const rad = (deg * Math.PI) / 180;
+                    return (
+                      <circle
+                        key={deg}
+                        cx={cx + Math.cos(rad) * (R - 22)}
+                        cy={cy + Math.sin(rad) * (R - 22)}
+                        r={4.5}
+                        fill="oklch(0.5 0.12 145)"
+                        stroke="oklch(0.75 0.15 145)"
+                        strokeWidth={0.4}
+                      />
+                    );
+                  })}
                   <text
                     x={cx}
-                    y={28}
+                    y={20}
                     textAnchor="middle"
                     fill="oklch(0.85 0.04 240)"
-                    fontSize={11}
-                    fontWeight={600}
-                    style={{ letterSpacing: "0.25em" }}
+                    fontSize={10}
+                    fontWeight={700}
+                    style={{ letterSpacing: "0.28em" }}
                   >
                     S12 · ROTONDA
                   </text>
