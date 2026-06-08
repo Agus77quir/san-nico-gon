@@ -83,14 +83,15 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
     const el = containerRef.current;
     if (!el) return;
     const { clientWidth, clientHeight } = el;
-    const s = Math.min(
-      (clientWidth - 60) / LAYOUT.totalW,
-      (clientHeight - 60) / LAYOUT.totalH,
-      1.2,
-    );
-    setScale(Math.max(0.25, s));
-    setTx((clientWidth - LAYOUT.totalW * s) / 2);
-    setTy((clientHeight - LAYOUT.totalH * s) / 2);
+    // Con la inclinación 3D la altura del plano se reduce ~70%, así que ajustamos al ancho
+    // pero permitiendo un zoom inicial más grande y realista.
+    const fitW = (clientWidth - 40) / LAYOUT.totalW;
+    const fitH = (clientHeight - 40) / (LAYOUT.totalH * 0.75);
+    const s = Math.min(Math.max(fitW, fitH * 0.9), 1.6);
+    const finalScale = Math.max(0.35, s);
+    setScale(finalScale);
+    setTx((clientWidth - LAYOUT.totalW * finalScale) / 2);
+    setTy((clientHeight - LAYOUT.totalH * finalScale) / 2);
   };
 
   useEffect(() => {
