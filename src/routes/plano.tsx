@@ -112,7 +112,8 @@ function PlanoPage() {
         </div>
       }
     >
-      <div className="relative flex h-full min-h-0 flex-col gap-4 lg:flex-row">
+      <div className="relative flex h-full min-h-0 flex-col gap-4 md:flex-row">
+        <AutoCollapseSidebar />
         <div className="min-h-[320px] flex-1">
           <CemeteryMap
             selectedId={selected?.id}
@@ -124,4 +125,13 @@ function PlanoPage() {
       </div>
     </AppShell>
   );
+}
+
+function AutoCollapseSidebar() {
+  const { setOpen, setOpenMobile, isMobile } = useSidebar();
+  useEffect(() => {
+    if (isMobile) setOpenMobile(false);
+    else setOpen(false);
+  }, [isMobile, setOpen, setOpenMobile]);
+  return null;
 }
