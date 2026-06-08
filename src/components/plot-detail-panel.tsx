@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, User, MapPin, Phone, Mail, Home, FileText, Camera, CalendarPlus } from "lucide-react";
+import { X, User, MapPin, Phone, Mail, Home, FileText, Camera, CalendarPlus, Hash, Users, Layers, Clock, Activity } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ApertureDialog } from "@/components/aperture-dialog";
 import {
+  SECTORS,
   statusColor,
   statusLabel,
   type Plot,
@@ -82,6 +83,72 @@ export function PlotDetailPanel({ plot, onClose }: Props) {
 
       <ScrollArea className="flex-1">
         <div className="space-y-5 p-5">
+          {/* Resumen */}
+          {(() => {
+            const sector = SECTORS.find((s) => s.id === plot.sectorId);
+            const occupied = plot.spots.filter((s) => s.occupant).length;
+            const total = plot.spots.length;
+            const free = total - occupied;
+            const pct = Math.round((occupied / total) * 100);
+            const lastDeath = plot.spots
+              .map((s) => s.occupant?.deathDate)
+              .filter(Boolean)
+              .sort()
+              .pop();
+            return (
+              <section className="grid grid-cols-2 gap-2">
+                <div className="rounded-xl border border-border bg-card/40 p-3">
+                  <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
+                    <Layers className="h-3 w-3" /> Sector
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-foreground">
+                    {sector?.name ?? plot.sectorId}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-border bg-card/40 p-3">
+                  <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
+                    <Hash className="h-3 w-3" /> Ubicación
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-foreground">
+                    Fila {plot.row + 1} · Col {plot.col + 1}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-border bg-card/40 p-3">
+                  <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
+                    <Users className="h-3 w-3" /> Capacidad
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-foreground">
+                    {occupied}/{total} · {free} libre{free === 1 ? "" : "s"}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-border bg-card/40 p-3">
+                  <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
+                    <Activity className="h-3 w-3" /> Ocupación
+                  </div>
+                  <div className="mt-1 flex items-center gap-2">
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${pct}%`, background: statusColor(plot.status) }}
+                      />
+                    </div>
+                    <span className="text-xs font-semibold text-foreground">{pct}%</span>
+                  </div>
+                </div>
+                {lastDeath && (
+                  <div className="col-span-2 rounded-xl border border-border bg-card/40 p-3">
+                    <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
+                      <Clock className="h-3 w-3" /> Última inhumación
+                    </div>
+                    <div className="mt-1 text-sm font-semibold text-foreground">
+                      {lastDeath}
+                    </div>
+                  </div>
+                )}
+              </section>
+            );
+          })()}
+
           {/* Holder */}
           {plot.holder && (
             <section>
