@@ -8,6 +8,13 @@ import {
   TrendingUp,
   Map,
 } from "lucide-react";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  ResponsiveContainer,
+} from "recharts";
 
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -30,18 +37,27 @@ function StatCard({
   hint,
   icon: Icon,
   accent,
+  chart,
 }: {
   label: string;
   value: string | number;
   hint?: string;
   icon: React.ComponentType<{ className?: string }>;
   accent?: string;
+  chart?: "area" | "bar";
 }) {
+  const color = accent ?? "var(--color-primary)";
+  const seedKey = String(label);
+  const data = Array.from({ length: 12 }).map((_, i) => {
+    let h = 0;
+    for (let j = 0; j < seedKey.length; j++) h = (h * 31 + seedKey.charCodeAt(j) + i * 7) >>> 0;
+    return { i, v: 30 + (h % 70) };
+  });
   return (
     <div className="glass group relative overflow-hidden rounded-2xl p-5">
       <div
         className="absolute -right-8 -top-8 h-32 w-32 rounded-full opacity-20 blur-2xl transition-opacity group-hover:opacity-40"
-        style={{ background: accent ?? "var(--color-primary)" }}
+        style={{ background: color }}
       />
       <div className="relative flex items-start justify-between">
         <div>
@@ -55,10 +71,29 @@ function StatCard({
         </div>
         <div
           className="rounded-xl border border-border p-2.5"
-          style={{ background: `${accent ?? "var(--color-primary)"}1a` }}
+          style={{ background: `color-mix(in oklab, ${color} 18%, transparent)` }}
         >
           <Icon className="h-4 w-4 text-foreground" />
         </div>
+      </div>
+      <div className="relative mt-3 h-14 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          {chart === "bar" ? (
+            <BarChart data={data}>
+              <Bar dataKey="v" fill={color} radius={[3, 3, 0, 0]} />
+            </BarChart>
+          ) : (
+            <AreaChart data={data} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id={`g-${seedKey}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={color} stopOpacity={0.6} />
+                  <stop offset="100%" stopColor={color} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <Area type="monotone" dataKey="v" stroke={color} strokeWidth={2} fill={`url(#g-${seedKey})`} />
+            </AreaChart>
+          )}
+        </ResponsiveContainer>
       </div>
     </div>
   );
@@ -126,10 +161,10 @@ function Dashboard() {
 
         {/* KPIs */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Total parcelas" value={STATS.total} icon={Grid3x3} accent="var(--color-primary-glow)" />
-          <StatCard label="Municipales" value={STATS.municipal} hint="3 lugares c/u" icon={Building2} accent="var(--color-chart-2)" />
-          <StatCard label="De socios" value={STATS.socio} hint="Familiares" icon={Users} accent="var(--color-success)" />
-          <StatCard label="Fallecidos registrados" value={STATS.deceasedCount} icon={TrendingUp} accent="var(--color-warning)" />
+          <StatCard label="Total parcelas" value={STATS.total} icon={Grid3x3} accent="var(--color-primary-glow)" chart="area" />
+          <StatCard label="Municipales" value={STATS.municipal} hint="3 lugares c/u" icon={Building2} accent="var(--color-chart-2)" chart="bar" />
+          <StatCard label="De socios" value={STATS.socio} hint="Familiares" icon={Users} accent="var(--color-success)" chart="area" />
+          <StatCard label="Fallecidos registrados" value={STATS.deceasedCount} icon={TrendingUp} accent="var(--color-warning)" chart="bar" />
         </div>
 
         {/* Occupancy + Sectors */}
