@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type WheelEvent, type PointerEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type WheelEvent,
+  type PointerEvent,
+} from "react";
 import { Minus, Plus, Locate, Box, Square, Activity } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -53,13 +61,49 @@ function sectorBoxById(id: string): SectorBox | undefined {
   return LAYOUT.boxes.find((b) => b.sector.id === id);
 }
 
+type Device = "mobile" | "tablet" | "desktop";
+
+interface DeviceProfile {
+  device: Device;
+  tilt: number; // grados rotateX
+  twist: number; // grados rotateZ
+  perspective: number;
+  maxScale: number;
+  minScale: number;
+  fitBoost: number;
+}
+
+function profileFor(width: number): DeviceProfile {
+  if (width < 640) {
+    return { device: "mobile", tilt: 26, twist: 0, perspective: 2200, maxScale: 2.4, minScale: 0.2, fitBoost: 1.0 };
+  }
+  if (width < 1024) {
+    return { device: "tablet", tilt: 32, twist: -1.5, perspective: 1900, maxScale: 2.6, minScale: 0.25, fitBoost: 1.05 };
+  }
+  return { device: "desktop", tilt: 38, twist: -2, perspective: 1600, maxScale: 3, minScale: 0.3, fitBoost: 1.1 };
+}
+
 export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(0.6);
-  const [tx, setTx] = useState(0);
-  const [ty, setTy] = useState(0);
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  // Transform vive en refs — evita re-renderizar 700+ nodos en cada drag/wheel.
+  const scaleRef = useRef(0.6);
+  const txRef = useRef(0);
+  const tyRef = useRef(0);
+  const rafRef = useRef<number | null>(null);
+
   const [is3D, setIs3D] = useState(true);
-  const dragRef = useRef<{ x: number; y: number; tx: number; ty: number; moved: boolean } | null>(null);
+  const is3DRef = useRef(is3D);
+  is3DRef.current = is3D;
+
+  const [profile, setProfile] = useState<DeviceProfile>(() =>
+    profileFor(typeof window !== "undefined" ? window.innerWidth : 1280),
+  );
+  const profileRef = useRef(profile);
+  profileRef.current = profile;
+
+  const dragRef = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
   const [hover, setHover] = useState<{ plot: Plot; x: number; y: number } | null>(null);
 
   const notifications = useNotifications();
@@ -79,26 +123,68 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
   }, [notifications]);
   const lastEvent = notifications[0];
 
-  const center = () => {
+  const applyTransform = useCallback((animate = false) => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const p = profileRef.current;
+    const tilt = is3DRef.current ? `rotateX(${p.tilt}deg) rotateZ(${p.twist}deg)` : "";
+    svg.style.transition = animate ? "transform 300ms ease" : "none";
+    svg.style.transform = `translate3d(${txRef.current}px, ${tyRef.current}px, 0) scale(${scaleRef.current}) ${tilt}`;
+  }, []);
+
+  const scheduleApply = useCallback(() => {
+    if (rafRef.current != null) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      applyTransform(false);
+    });
+  }, [applyTransform]);
+
+  const center = useCallback(
+    (animate = true) => {
+      const el = containerRef.current;
+      if (!el) return;
+      const { clientWidth, clientHeight } = el;
+      const p = profileRef.current;
+      // Con tilt 3D la altura aparente se reduce; ajustamos por ancho con boost.
+      const fitW = ((clientWidth - 24) / LAYOUT.totalW) * p.fitBoost;
+      const fitH = (clientHeight - 24) / (LAYOUT.totalH * 0.7);
+      const s = Math.min(Math.max(fitW, fitH * 0.9), p.maxScale);
+      const finalScale = Math.max(p.minScale, s);
+      scaleRef.current = finalScale;
+      txRef.current = (clientWidth - LAYOUT.totalW * finalScale) / 2;
+      tyRef.current = (clientHeight - LAYOUT.totalH * finalScale) / 2;
+      applyTransform(animate);
+    },
+    [applyTransform],
+  );
+
+  // Inicializar y reescalar al cambiar el tamaño del contenedor.
+  useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const { clientWidth, clientHeight } = el;
-    // Con la inclinación 3D la altura del plano se reduce ~70%, así que ajustamos al ancho
-    // pero permitiendo un zoom inicial más grande y realista.
-    const fitW = (clientWidth - 40) / LAYOUT.totalW;
-    const fitH = (clientHeight - 40) / (LAYOUT.totalH * 0.75);
-    const s = Math.min(Math.max(fitW, fitH * 0.9), 1.6);
-    const finalScale = Math.max(0.35, s);
-    setScale(finalScale);
-    setTx((clientWidth - LAYOUT.totalW * finalScale) / 2);
-    setTy((clientHeight - LAYOUT.totalH * finalScale) / 2);
-  };
-
-  useEffect(() => {
-    center();
+    const update = () => {
+      const w = el.clientWidth;
+      const next = profileFor(w);
+      if (next.device !== profileRef.current.device) {
+        profileRef.current = next;
+        setProfile(next);
+      }
+      center(false);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Re-aplicar transform cuando cambia 3D o el perfil.
+  useEffect(() => {
+    applyTransform(true);
+  }, [is3D, profile, applyTransform]);
+
+  // Focus en plot externo
   useEffect(() => {
     if (!focusId) return;
     const plot = PLOTS.find((p) => p.id === focusId);
@@ -109,42 +195,79 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
     if (!el) return;
     const px = box.x + SECTOR_PADDING_X + plot.col * (CELL + GAP) + CELL / 2;
     const py = box.y + SECTOR_PADDING_TOP + plot.row * (CELL + GAP) + CELL / 2;
-    const newScale = 1.6;
-    setScale(newScale);
-    setTx(el.clientWidth / 2 - px * newScale);
-    setTy(el.clientHeight / 2 - py * newScale);
-  }, [focusId]);
+    const newScale = Math.min(profileRef.current.maxScale, 1.6);
+    scaleRef.current = newScale;
+    txRef.current = el.clientWidth / 2 - px * newScale;
+    tyRef.current = el.clientHeight / 2 - py * newScale;
+    applyTransform(true);
+  }, [focusId, applyTransform]);
 
-  const onWheel = (e: WheelEvent) => {
-    e.preventDefault();
-    const el = containerRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-    const delta = -e.deltaY * 0.0015;
-    const newScale = Math.min(3, Math.max(0.2, scale * (1 + delta)));
-    const k = newScale / scale;
-    setTx(mx - (mx - tx) * k);
-    setTy(my - (my - ty) * k);
-    setScale(newScale);
-  };
+  const onWheel = useCallback(
+    (e: WheelEvent) => {
+      e.preventDefault();
+      const el = containerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      const delta = -e.deltaY * 0.0015;
+      const p = profileRef.current;
+      const newScale = Math.min(p.maxScale, Math.max(p.minScale, scaleRef.current * (1 + delta)));
+      const k = newScale / scaleRef.current;
+      txRef.current = mx - (mx - txRef.current) * k;
+      tyRef.current = my - (my - tyRef.current) * k;
+      scaleRef.current = newScale;
+      scheduleApply();
+    },
+    [scheduleApply],
+  );
 
-  const onPointerDown = (e: PointerEvent) => {
+  const onPointerDown = useCallback((e: PointerEvent) => {
     (e.target as Element).setPointerCapture?.(e.pointerId);
-    dragRef.current = { x: e.clientX, y: e.clientY, tx, ty, moved: false };
-  };
-  const onPointerMove = (e: PointerEvent) => {
-    if (!dragRef.current) return;
-    setTx(dragRef.current.tx + e.clientX - dragRef.current.x);
-    setTy(dragRef.current.ty + e.clientY - dragRef.current.y);
-  };
-  const onPointerUp = () => {
+    dragRef.current = { x: e.clientX, y: e.clientY, tx: txRef.current, ty: tyRef.current };
+  }, []);
+
+  const onPointerMove = useCallback(
+    (e: PointerEvent) => {
+      if (!dragRef.current) return;
+      txRef.current = dragRef.current.tx + e.clientX - dragRef.current.x;
+      tyRef.current = dragRef.current.ty + e.clientY - dragRef.current.y;
+      scheduleApply();
+    },
+    [scheduleApply],
+  );
+
+  const onPointerUp = useCallback(() => {
     dragRef.current = null;
-  };
+  }, []);
+
+  const zoomBy = useCallback(
+    (factor: number) => {
+      const el = containerRef.current;
+      const p = profileRef.current;
+      const newScale = Math.min(p.maxScale, Math.max(p.minScale, scaleRef.current * factor));
+      if (el) {
+        const cx = el.clientWidth / 2;
+        const cy = el.clientHeight / 2;
+        const k = newScale / scaleRef.current;
+        txRef.current = cx - (cx - txRef.current) * k;
+        tyRef.current = cy - (cy - tyRef.current) * k;
+      }
+      scaleRef.current = newScale;
+      applyTransform(true);
+    },
+    [applyTransform],
+  );
 
   return (
     <div className="relative h-full w-full overflow-hidden rounded-2xl border border-border bg-[radial-gradient(circle_at_20%_10%,oklch(0.62_0.18_235/0.08),transparent_60%),radial-gradient(circle_at_80%_90%,oklch(0.42_0.12_250/0.1),transparent_60%)]">
+      {/* CSS para resaltar parcelas parciales sin SMIL */}
+      <style>{`
+        @keyframes plot-pulse { 0%,100% { opacity: .25 } 50% { opacity: .7 } }
+        .plot-pulse { animation: plot-pulse 1.8s ease-in-out infinite; }
+        .map-svg { will-change: transform; backface-visibility: hidden; }
+      `}</style>
+
       <div
         className="absolute inset-0 opacity-[0.07]"
         style={{
@@ -156,13 +279,13 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
 
       {/* Controls */}
       <div className="absolute right-4 top-4 z-10 flex flex-col gap-2">
-        <Button size="icon" variant="secondary" className="glass-strong h-9 w-9" onClick={() => setScale((s) => Math.min(3, s * 1.2))}>
+        <Button size="icon" variant="secondary" className="glass-strong h-9 w-9" onClick={() => zoomBy(1.25)}>
           <Plus className="h-4 w-4" />
         </Button>
-        <Button size="icon" variant="secondary" className="glass-strong h-9 w-9" onClick={() => setScale((s) => Math.max(0.2, s / 1.2))}>
+        <Button size="icon" variant="secondary" className="glass-strong h-9 w-9" onClick={() => zoomBy(0.8)}>
           <Minus className="h-4 w-4" />
         </Button>
-        <Button size="icon" variant="secondary" className="glass-strong h-9 w-9" onClick={center}>
+        <Button size="icon" variant="secondary" className="glass-strong h-9 w-9" onClick={() => center(true)}>
           <Locate className="h-4 w-4" />
         </Button>
         <Button
@@ -176,7 +299,7 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
         </Button>
       </div>
 
-      {/* Live HUD */}
+      {/* HUD */}
       <div className="glass-strong pointer-events-none absolute left-4 top-4 z-10 flex items-center gap-4 rounded-xl px-4 py-2.5 text-xs">
         <div>
           <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Ocupación</div>
@@ -197,10 +320,15 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
             <div className="text-sm font-medium tabular-nums text-destructive">{liveStats.occupied}</div>
           </div>
         </div>
+        <div className="hidden h-8 w-px bg-border sm:block" />
+        <div className="hidden sm:block">
+          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Vista</div>
+          <div className="text-xs font-medium capitalize text-foreground">{profile.device}</div>
+        </div>
         {lastEvent && (
           <>
-            <div className="h-8 w-px bg-border" />
-            <div className="flex items-center gap-1.5">
+            <div className="hidden h-8 w-px bg-border md:block" />
+            <div className="hidden items-center gap-1.5 md:flex">
               <Activity className="h-3 w-3 animate-pulse text-primary" />
               <div className="max-w-[160px]">
                 <div className="truncate text-xs font-medium text-foreground">{lastEvent.title}</div>
@@ -224,10 +352,6 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
             <span className="text-muted-foreground">{label}</span>
           </div>
         ))}
-        <div className="ml-2 h-4 w-px bg-border" />
-        <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-          Plano basado en planos originales · Cementerio Parque San Nicolás Renacimiento
-        </span>
       </div>
 
       <div
@@ -238,29 +362,27 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
-        style={{ perspective: "1600px", perspectiveOrigin: "50% 25%" }}
+        style={{
+          perspective: `${profile.perspective}px`,
+          perspectiveOrigin: "50% 25%",
+          // Sombra global del plano hecha con box-shadow (mucho más barata que filter:drop-shadow).
+          boxShadow: is3D ? "inset 0 -60px 80px -40px rgba(0,0,0,.35)" : undefined,
+        }}
       >
         <svg
+          ref={svgRef}
+          className="map-svg"
           width={LAYOUT.totalW}
           height={LAYOUT.totalH}
           style={{
-            transform: `translate(${tx}px, ${ty}px) scale(${scale}) ${is3D ? "rotateX(38deg) rotateZ(-2deg)" : ""}`,
             transformOrigin: "0 0",
             transformStyle: "preserve-3d",
-            transition: dragRef.current ? "none" : "transform 350ms ease",
-            filter: is3D
-              ? "drop-shadow(0 30px 45px rgba(0,0,0,0.6))"
-              : "drop-shadow(0 8px 16px rgba(0,0,0,0.3))",
           }}
         >
           <defs>
-            <linearGradient id="cellHi" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="white" stopOpacity="0.35" />
-              <stop offset="55%" stopColor="white" stopOpacity="0" />
-            </linearGradient>
             <linearGradient id="sectorBg" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="oklch(0.26 0.04 250 / 0.88)" />
-              <stop offset="100%" stopColor="oklch(0.18 0.03 250 / 0.65)" />
+              <stop offset="0%" stopColor="oklch(0.26 0.04 250 / 0.9)" />
+              <stop offset="100%" stopColor="oklch(0.18 0.03 250 / 0.7)" />
             </linearGradient>
             <linearGradient id="avenida" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="oklch(0.32 0.02 240 / 0.6)" />
@@ -275,25 +397,11 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
               <stop offset="0%" stopColor="oklch(0.45 0.08 70 / 0.9)" />
               <stop offset="100%" stopColor="oklch(0.28 0.05 60 / 0.7)" />
             </linearGradient>
-            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="3" result="b" />
-              <feMerge>
-                <feMergeNode in="b" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
           </defs>
 
-          {/* Avenida Principal — banda horizontal */}
+          {/* Avenida Principal */}
           <g>
-            <rect
-              x={0}
-              y={AVENIDA_Y}
-              width={LAYOUT.totalW}
-              height={AVENIDA_H}
-              fill="url(#avenida)"
-              stroke="oklch(1 0 0 / 0.08)"
-            />
+            <rect x={0} y={AVENIDA_Y} width={LAYOUT.totalW} height={AVENIDA_H} fill="url(#avenida)" />
             <line
               x1={0}
               x2={LAYOUT.totalW}
@@ -319,7 +427,6 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
             const s = box.sector;
 
             if (s.shape === "landmark") {
-              // Iglesia / Templo Ecuménico — silueta arquitectónica
               const w = box.width;
               const h = box.height;
               const naveW = w * 0.55;
@@ -329,64 +436,37 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
               const apseR = naveW / 2;
               return (
                 <g key={s.id} transform={`translate(${box.x},${box.y})`}>
-                  {/* Parcela / jardín alrededor */}
-                  {is3D && (
-                    <rect x={4} y={6} width={w} height={h} rx={14} fill="rgba(0,0,0,0.5)" />
-                  )}
                   <rect width={w} height={h} rx={14} fill="oklch(0.32 0.05 145 / 0.35)" stroke="oklch(0.7 0.1 145 / 0.3)" />
-                  {/* Caminito de entrada */}
                   <rect x={w / 2 - 8} y={h - 40} width={16} height={36} fill="oklch(0.65 0.02 60 / 0.5)" />
-                  {/* Árboles */}
                   {[0.15, 0.85].map((fx, i) => (
                     <g key={i}>
-                      <circle cx={w * fx} cy={h * 0.18} r={7} fill="oklch(0.48 0.12 145)" stroke="oklch(0.7 0.15 145)" strokeWidth={0.5} />
-                      <circle cx={w * fx} cy={h * 0.82} r={7} fill="oklch(0.48 0.12 145)" stroke="oklch(0.7 0.15 145)" strokeWidth={0.5} />
+                      <circle cx={w * fx} cy={h * 0.18} r={7} fill="oklch(0.48 0.12 145)" />
+                      <circle cx={w * fx} cy={h * 0.82} r={7} fill="oklch(0.48 0.12 145)" />
                     </g>
                   ))}
-                  {/* Nave */}
-                  <rect
-                    x={naveX}
-                    y={naveY}
-                    width={naveW}
-                    height={naveH}
-                    fill="url(#temploBg)"
-                    stroke="oklch(0.9 0.06 70 / 0.6)"
-                    strokeWidth={1}
-                  />
-                  {/* Techo a dos aguas (banda más oscura) */}
+                  <rect x={naveX} y={naveY} width={naveW} height={naveH} fill="url(#temploBg)" stroke="oklch(0.9 0.06 70 / 0.6)" />
                   <polygon
                     points={`${naveX - 4},${naveY} ${naveX + naveW + 4},${naveY} ${naveX + naveW / 2},${naveY - 18}`}
                     fill="oklch(0.32 0.07 60 / 0.95)"
-                    stroke="oklch(0.85 0.06 70 / 0.5)"
                   />
-                  {/* Ábside semicircular */}
                   <path
                     d={`M ${naveX},${naveY + naveH} a ${apseR},${apseR * 0.55} 0 0 0 ${naveW},0`}
                     fill="url(#temploBg)"
                     stroke="oklch(0.9 0.06 70 / 0.6)"
                   />
-                  {/* Ventanas */}
                   {[0.25, 0.5, 0.75].map((fy) => (
                     <g key={fy}>
                       <rect x={naveX + 6} y={naveY + naveH * fy - 6} width={5} height={12} rx={2} fill="oklch(0.85 0.1 230 / 0.7)" />
                       <rect x={naveX + naveW - 11} y={naveY + naveH * fy - 6} width={5} height={12} rx={2} fill="oklch(0.85 0.1 230 / 0.7)" />
                     </g>
                   ))}
-                  {/* Torre/campanario */}
                   <rect x={w / 2 - 9} y={naveY - 46} width={18} height={32} fill="oklch(0.42 0.07 60 / 0.95)" stroke="oklch(0.85 0.06 70 / 0.6)" />
-                  <polygon
-                    points={`${w / 2 - 12},${naveY - 46} ${w / 2 + 12},${naveY - 46} ${w / 2},${naveY - 64}`}
-                    fill="oklch(0.32 0.07 60)"
-                    stroke="oklch(0.85 0.06 70 / 0.6)"
-                  />
-                  {/* Cruz sobre el campanario */}
+                  <polygon points={`${w / 2 - 12},${naveY - 46} ${w / 2 + 12},${naveY - 46} ${w / 2},${naveY - 64}`} fill="oklch(0.32 0.07 60)" />
                   <g transform={`translate(${w / 2},${naveY - 76})`}>
                     <rect x={-1} y={-8} width={2} height={14} fill="oklch(0.96 0.04 70)" />
                     <rect x={-4} y={-3} width={8} height={2} fill="oklch(0.96 0.04 70)" />
                   </g>
-                  {/* Puerta */}
-                  <rect x={w / 2 - 5} y={naveY + naveH - 14} width={10} height={14} rx={1} fill="oklch(0.22 0.04 60)" stroke="oklch(0.85 0.06 70 / 0.5)" />
-                  {/* Etiqueta */}
+                  <rect x={w / 2 - 5} y={naveY + naveH - 14} width={10} height={14} rx={1} fill="oklch(0.22 0.04 60)" />
                   <text
                     x={w / 2}
                     y={h - 6}
@@ -408,13 +488,9 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
               const R = box.width / 2;
               return (
                 <g key={s.id} transform={`translate(${box.x},${box.y})`}>
-                  {is3D && <circle cx={cx + 4} cy={cy + 6} r={R} fill="rgba(0,0,0,0.55)" />}
-                  {/* Césped exterior */}
                   <circle cx={cx} cy={cy} r={R} fill="oklch(0.3 0.05 145 / 0.4)" stroke="oklch(0.7 0.1 145 / 0.3)" />
-                  {/* Anillo de calzada */}
                   <circle cx={cx} cy={cy} r={R - 10} fill="none" stroke="oklch(0.55 0.02 240 / 0.8)" strokeWidth={18} />
                   <circle cx={cx} cy={cy} r={R - 10} fill="none" stroke="oklch(0.85 0.04 240 / 0.5)" strokeWidth={0.6} strokeDasharray="4 5" />
-                  {/* Caminos radiales (acceso desde la avenida y desde el oeste) */}
                   {[0, 90, 180, 270].map((deg) => {
                     const rad = (deg * Math.PI) / 180;
                     return (
@@ -429,19 +505,13 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
                       />
                     );
                   })}
-                  {/* Isla central */}
                   <circle cx={cx} cy={cy} r={R - 45} fill="url(#rotondaBg)" stroke="oklch(1 0 0 / 0.18)" />
-                  <circle cx={cx} cy={cy} r={R - 60} fill="none" stroke="oklch(0.7 0.1 145 / 0.4)" strokeDasharray="2 3" />
-                  {/* Sala de máquinas */}
                   <rect x={cx - 42} y={cy - 26} width={50} height={32} rx={3} fill="oklch(0.38 0.04 240 / 0.95)" stroke="oklch(1 0 0 / 0.25)" />
                   <polygon points={`${cx - 44},${cy - 26} ${cx + 10},${cy - 26} ${cx - 17},${cy - 34}`} fill="oklch(0.28 0.05 60 / 0.95)" />
                   <text x={cx - 17} y={cy - 12} textAnchor="middle" fill="oklch(0.85 0.02 240)" fontSize={4.5} fontWeight={600}>SALA DE</text>
                   <text x={cx - 17} y={cy - 6} textAnchor="middle" fill="oklch(0.85 0.02 240)" fontSize={4.5} fontWeight={600}>MÁQUINAS</text>
-                  {/* Cisterna */}
                   <circle cx={cx + 28} cy={cy + 22} r={20} fill="oklch(0.4 0.13 230 / 0.65)" stroke="oklch(0.75 0.18 230 / 0.6)" />
-                  <circle cx={cx + 28} cy={cy + 22} r={14} fill="none" stroke="oklch(0.85 0.15 230 / 0.4)" strokeWidth={0.5} />
                   <text x={cx + 28} y={cy + 24} textAnchor="middle" fill="oklch(0.95 0.05 230)" fontSize={5} fontWeight={600}>CISTERNA</text>
-                  {/* Árboles alrededor */}
                   {[30, 60, 120, 150, 210, 240, 300, 330].map((deg) => {
                     const rad = (deg * Math.PI) / 180;
                     return (
@@ -451,8 +521,6 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
                         cy={cy + Math.sin(rad) * (R - 22)}
                         r={4.5}
                         fill="oklch(0.5 0.12 145)"
-                        stroke="oklch(0.75 0.15 145)"
-                        strokeWidth={0.4}
                       />
                     );
                   })}
@@ -471,27 +539,16 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
               );
             }
 
-            // Grid sector
             const plots = PLOTS.filter((p) => p.sectorId === s.id);
             return (
               <g key={s.id} transform={`translate(${box.x},${box.y})`}>
-                {is3D && (
-                  <rect x={2} y={4} width={box.width} height={box.height} rx={10} fill="rgba(0,0,0,0.45)" />
-                )}
-                <rect
-                  width={box.width}
-                  height={box.height}
-                  rx={10}
-                  fill="url(#sectorBg)"
-                  stroke="oklch(1 0 0 / 0.12)"
-                />
+                <rect width={box.width} height={box.height} rx={10} fill="url(#sectorBg)" stroke="oklch(1 0 0 / 0.12)" />
                 <text x={SECTOR_PADDING_X} y={18} fill="oklch(0.85 0.01 240)" fontSize={11} fontWeight={700} style={{ letterSpacing: "0.1em" }}>
                   {s.id.toUpperCase()}
                 </text>
                 <text x={box.width - SECTOR_PADDING_X} y={18} textAnchor="end" fill="oklch(0.65 0.02 240)" fontSize={8}>
                   {s.rows}×{s.cols}
                 </text>
-                {/* file headers F1..Fn */}
                 {Array.from({ length: s.cols }).map((_, c) => (
                   <text
                     key={`fh-${c}`}
@@ -522,41 +579,33 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
                         if (!rect) return;
                         setHover({ plot: p, x: e.clientX - rect.left, y: e.clientY - rect.top });
                       }}
-                      onPointerMove={(e) => {
-                        const rect = containerRef.current?.getBoundingClientRect();
-                        if (!rect) return;
-                        setHover((h) =>
-                          h && h.plot.id === p.id
-                            ? { ...h, x: e.clientX - rect.left, y: e.clientY - rect.top }
-                            : h,
-                        );
-                      }}
                       onPointerLeave={() => setHover((h) => (h?.plot.id === p.id ? null : h))}
                     >
-                      {is3D && (
-                        <rect x={1} y={3} width={CELL} height={CELL} rx={3} fill="rgba(0,0,0,0.55)" />
-                      )}
                       <rect
                         width={CELL}
                         height={CELL}
                         rx={3}
                         fill={statusColor(p.status)}
-                        opacity={isSelected ? 1 : 0.9}
+                        opacity={isSelected ? 1 : 0.92}
                         stroke={isSelected ? "white" : "oklch(1 0 0 / 0.12)"}
                         strokeWidth={isSelected ? 2 : 1}
-                        filter={isSelected ? "url(#glow)" : undefined}
                       >
                         <title>{`${p.code} — ${statusLabel(p.status)}`}</title>
                       </rect>
-                      <rect width={CELL} height={CELL / 2} rx={3} fill="url(#cellHi)" pointerEvents="none" />
                       {p.status === "partial" && (
-                        <circle cx={CELL / 2} cy={CELL / 2} r={CELL / 2} fill="none" stroke="white" strokeWidth={0.6} opacity={0.5}>
-                          <animate attributeName="r" from={CELL / 4} to={CELL / 1.6} dur="1.8s" repeatCount="indefinite" />
-                          <animate attributeName="opacity" from="0.7" to="0" dur="1.8s" repeatCount="indefinite" />
-                        </circle>
+                        <rect
+                          className="plot-pulse"
+                          width={CELL}
+                          height={CELL}
+                          rx={3}
+                          fill="none"
+                          stroke="white"
+                          strokeWidth={0.8}
+                          pointerEvents="none"
+                        />
                       )}
                       {p.type === "socio" && (
-                        <circle cx={CELL - 3} cy={3} r={2} fill="oklch(0.72 0.18 235)" stroke="white" strokeWidth={0.5} />
+                        <circle cx={CELL - 3} cy={3} r={2} fill="oklch(0.72 0.18 235)" />
                       )}
                     </g>
                   );
