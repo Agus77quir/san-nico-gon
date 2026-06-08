@@ -110,7 +110,7 @@ function PlanoPage() {
         </div>
       }
     >
-      <div className="flex h-[calc(100vh-7.5rem)] flex-col gap-4 lg:flex-row">
+      <div className="flex h-full min-h-[600px] flex-col gap-4 lg:flex-row">
         <div className="flex-1">
           <CemeteryMap
             selectedId={selected?.id}
