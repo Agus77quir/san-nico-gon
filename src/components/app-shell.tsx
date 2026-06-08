@@ -27,17 +27,17 @@ export function AppShell({ children, title, subtitle, actions }: Props) {
         <SidebarInset className="flex h-screen min-h-0 flex-col bg-transparent">
           <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 border-b border-border bg-background/60 px-4 backdrop-blur-xl md:px-6">
             <SidebarTrigger />
-            <div className="flex flex-1 items-baseline gap-3">
-              <h1 className="text-lg font-semibold tracking-tight text-foreground">
+            <div className="flex min-w-0 shrink items-baseline gap-3">
+              <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">
                 {title}
               </h1>
               {subtitle && (
-                <span className="hidden text-xs text-muted-foreground sm:inline">
+                <span className="hidden truncate text-xs text-muted-foreground lg:inline">
                   {subtitle}
                 </span>
               )}
             </div>
-            {actions}
+            {actions && <div className="ml-auto min-w-0 flex-1 max-w-md">{actions}</div>}
             <NotificationsBell />
           </header>
           <main className="min-h-0 flex-1 overflow-auto p-4 md:p-6">{children}</main>
