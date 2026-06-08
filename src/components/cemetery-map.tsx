@@ -570,6 +570,7 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
                       key={p.id}
                       transform={`translate(${x},${y})`}
                       style={{ cursor: "pointer" }}
+                      onPointerDown={(e) => e.stopPropagation()}
                       onClick={(e) => {
                         e.stopPropagation();
                         onSelect(p);
