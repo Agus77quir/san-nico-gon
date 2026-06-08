@@ -37,7 +37,7 @@ export function AppShell({ children, title, subtitle, actions }: Props) {
                 </span>
               )}
             </div>
-            {actions && <div className="ml-auto min-w-0 flex-1 max-w-md">{actions}</div>}
+            {actions && <div className="ml-auto flex min-w-0 flex-1 justify-end overflow-hidden">{actions}</div>}
             <NotificationsBell />
           </header>
           <main className="min-h-0 flex-1 overflow-auto p-4 md:p-6">{children}</main>
