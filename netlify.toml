@@ -4,12 +4,14 @@
 ## el resto de rutas al handler SSR.
 
 [build]
-  command = "bun run build:deploy"
+  command = "npm install -g bun && bun install --frozen-lockfile && bun run build:deploy"
   publish = "dist"
 
 [build.environment]
   NODE_VERSION = "20"
   NITRO_PRESET = "netlify"
+  NETLIFY = "true"
+  BUN_VERSION = "1.1.38"
 
 [[redirects]]
   from = "/*"
