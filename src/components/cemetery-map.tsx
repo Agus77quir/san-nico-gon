@@ -97,9 +97,9 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
   const is3DRef = useRef(is3D);
   is3DRef.current = is3D;
 
-  const [profile, setProfile] = useState<DeviceProfile>(() =>
-    profileFor(typeof window !== "undefined" ? window.innerWidth : 1280),
-  );
+  // Initialize with desktop profile on both server and client to avoid hydration mismatch.
+  // Real device profile is computed after mount via ResizeObserver.
+  const [profile, setProfile] = useState<DeviceProfile>(() => profileFor(1280));
   const profileRef = useRef(profile);
   profileRef.current = profile;
 
