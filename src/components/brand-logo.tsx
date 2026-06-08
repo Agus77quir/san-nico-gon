@@ -1,4 +1,4 @@
-import logoUrl from "@/assets/logo.png";
+const logoUrl = "/logo.png";
 import { cn } from "@/lib/utils";
 
 interface Props {
