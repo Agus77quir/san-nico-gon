@@ -111,8 +111,8 @@ function PlanoPage() {
         </div>
       }
     >
-      <div className="relative flex h-full min-h-0 flex-col gap-4 md:flex-row">
-        <div className="min-h-[320px] flex-1">
+      <div className="relative flex h-full min-h-0 min-w-0 flex-col gap-4 overflow-hidden md:flex-row">
+        <div className="min-h-[320px] min-w-0 flex-1">
           <CemeteryMap
             selectedId={selected?.id}
             onSelect={(p) => setSelected(p)}
