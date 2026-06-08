@@ -1,24 +1,24 @@
 #!/usr/bin/env node
 /**
- * Verifica las salidas del build antes de desplegar.
- * Si falta algún archivo crítico, sale con código != 0 para abortar el deploy.
+ * Verifica las salidas del build antes de desplegar en Netlify.
  *
- * Se ejecuta como postbuild (ver package.json) y también lo invoca
- * netlify.toml después de `vite build`.
+ * Este proyecto es SSR puro con TanStack Start + Nitro (preset netlify):
+ * - `dist/` contiene los assets estáticos (no hay index.html — el HTML lo
+ *   genera la función serverless en cada request).
+ * - `.netlify/functions-internal/server/server.mjs` es el handler SSR.
+ *
+ * El redirect en `netlify.toml` envía cualquier ruta al handler, así que la
+ * ausencia de index.html es esperada y NO debe abortar el deploy.
  */
-import { existsSync, statSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, statSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const ROOT = resolve(process.cwd());
 const PUBLISH_DIR = join(ROOT, "dist");
-const NETLIFY_FUNCTION = join(ROOT, ".netlify", "functions-internal", "server", "server.mjs");
-
-const REQUIRED_FILES = [
-  "index.html",
-];
-
-const REQUIRED_DIRS = [
-  "assets", // bundles JS/CSS generados por Vite
+const NETLIFY_FUNCTION_CANDIDATES = [
+  join(ROOT, ".netlify", "functions-internal", "server", "server.mjs"),
+  join(ROOT, ".netlify", "functions-internal", "server", "index.mjs"),
+  join(ROOT, ".netlify", "functions", "server.mjs"),
 ];
 
 const errors = [];
@@ -37,61 +37,31 @@ function check(label, fn) {
 console.log(`\n🔎 Verificando salida del build en: ${PUBLISH_DIR}\n`);
 
 check("publish dir existe", () => {
-  if (!existsSync(PUBLISH_DIR)) {
+  if (!existsSync(PUBLISH_DIR) || !statSync(PUBLISH_DIR).isDirectory()) {
     throw new Error(`no existe ${PUBLISH_DIR}. ¿Falló \`vite build\`?`);
   }
-  if (!statSync(PUBLISH_DIR).isDirectory()) {
-    throw new Error(`${PUBLISH_DIR} no es un directorio`);
+  const entries = readdirSync(PUBLISH_DIR);
+  if (entries.length === 0) {
+    throw new Error(`${PUBLISH_DIR} está vacío`);
   }
 });
 
-if (existsSync(PUBLISH_DIR)) {
-  for (const file of REQUIRED_FILES) {
-    check(`${file} presente`, () => {
-      const p = join(PUBLISH_DIR, file);
-      if (!existsSync(p)) {
-        throw new Error(
-          `falta ${file}. Netlify no tendrá una entrada HTML válida y el sitio puede mostrar 404.`,
-        );
-      }
-      const size = statSync(p).size;
-      if (size < 100) {
-        warnings.push(`${file} pesa solo ${size} bytes — sospechoso, revisa el build.`);
-      }
-    });
+check("función serverless de Netlify presente", () => {
+  const found = NETLIFY_FUNCTION_CANDIDATES.find((p) => existsSync(p));
+  if (!found) {
+    // En builds locales (preset cloudflare) no existe — solo avisar.
+    if (process.env.NETLIFY !== "true" && process.env.NITRO_PRESET !== "netlify") {
+      warnings.push(
+        "no se encontró el handler de Netlify (build local con otro preset, OK).",
+      );
+      return;
+    }
+    throw new Error(
+      `falta el handler SSR. Buscado en:\n     ${NETLIFY_FUNCTION_CANDIDATES.join("\n     ")}`,
+    );
   }
-
-  for (const dir of REQUIRED_DIRS) {
-    check(`directorio ${dir}/ presente`, () => {
-      const p = join(PUBLISH_DIR, dir);
-      if (!existsSync(p) || !statSync(p).isDirectory()) {
-        throw new Error(`falta el directorio ${dir}/. Sin bundles, la app no carga.`);
-      }
-      const files = readdirSync(p);
-      if (files.length === 0) {
-        throw new Error(`el directorio ${dir}/ está vacío`);
-      }
-    });
-  }
-
-  // Sanity check del HTML: debe enlazar al menos un módulo JS y al CSS.
-  check("index.html enlaza JS y CSS", () => {
-    if (!existsSync(join(PUBLISH_DIR, "index.html"))) return; // ya se reportó arriba
-    const html = readFileSync(join(PUBLISH_DIR, "index.html"), "utf8");
-    if (!/<script[^>]+type=["']module["']/i.test(html)) {
-      throw new Error("index.html no contiene <script type=\"module\"> — el bundle no se cargará.");
-    }
-    if (!/<link[^>]+rel=["']stylesheet["']/i.test(html)) {
-      warnings.push("index.html no enlaza ningún stylesheet — verifica estilos.");
-    }
-  });
-
-  check("función serverless de Netlify presente", () => {
-    if (!existsSync(NETLIFY_FUNCTION)) {
-      throw new Error(`falta ${NETLIFY_FUNCTION}. Las rutas SSR no funcionarán en Netlify.`);
-    }
-  });
-}
+  console.log(`     → ${found}`);
+});
 
 if (warnings.length > 0) {
   console.log("\n⚠️  Avisos:");
