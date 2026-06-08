@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type WheelEvent, type PointerEven
 import { Minus, Plus, Locate, Box, Square, Activity } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { PLOTS, SECTORS, statusColor, statusLabel, type Plot } from "@/lib/demo-data";
+import { PLOTS, SECTORS, statusColor, statusLabel, type Plot, type Sector } from "@/lib/demo-data";
 import { useNotifications } from "@/lib/notifications-store";
 
 interface Props {
@@ -11,47 +11,51 @@ interface Props {
   focusId?: string;
 }
 
-const CELL = 26;
-const GAP = 4;
-const SECTOR_PADDING = 28;
-const SECTOR_GAP = 60;
+const CELL = 20;
+const GAP = 3;
+const SECTOR_PADDING_X = 16;
+const SECTOR_PADDING_TOP = 26;
+const SECTOR_PADDING_BOTTOM = 10;
+const TEMPLO_W = 170;
+const TEMPLO_H = 220;
+const ROTONDA_SIZE = 260;
+const AVENIDA_Y = 250;
+const AVENIDA_H = 16;
 
-interface LaidOutSector {
-  id: string;
-  name: string;
+interface SectorBox {
+  sector: Sector;
   x: number;
   y: number;
   width: number;
   height: number;
 }
 
+function boxFor(s: Sector): SectorBox {
+  if (s.shape === "landmark") {
+    return { sector: s, x: s.x, y: s.y, width: TEMPLO_W, height: TEMPLO_H };
+  }
+  if (s.shape === "rotonda") {
+    return { sector: s, x: s.x, y: s.y, width: ROTONDA_SIZE, height: ROTONDA_SIZE };
+  }
+  const width = s.cols * (CELL + GAP) - GAP + SECTOR_PADDING_X * 2;
+  const height = s.rows * (CELL + GAP) - GAP + SECTOR_PADDING_TOP + SECTOR_PADDING_BOTTOM;
+  return { sector: s, x: s.x, y: s.y, width, height };
+}
+
 const LAYOUT = (() => {
-  // 2x2 layout of sectors
-  const sectors: LaidOutSector[] = [];
-  let rowY = 0;
-  let rowHeight = 0;
-  let colX = 0;
-  const perRow = 2;
-  SECTORS.forEach((s, i) => {
-    const w = s.cols * (CELL + GAP) - GAP + SECTOR_PADDING * 2;
-    const h = s.rows * (CELL + GAP) - GAP + SECTOR_PADDING * 2 + 24;
-    if (i % perRow === 0 && i !== 0) {
-      rowY += rowHeight + SECTOR_GAP;
-      rowHeight = 0;
-      colX = 0;
-    }
-    sectors.push({ id: s.id, name: s.name, x: colX, y: rowY, width: w, height: h });
-    colX += w + SECTOR_GAP;
-    rowHeight = Math.max(rowHeight, h);
-  });
-  const totalW = Math.max(...sectors.map((s) => s.x + s.width));
-  const totalH = Math.max(...sectors.map((s) => s.y + s.height));
-  return { sectors, totalW, totalH };
+  const boxes = SECTORS.map(boxFor);
+  const totalW = Math.max(...boxes.map((b) => b.x + b.width)) + 40;
+  const totalH = Math.max(...boxes.map((b) => b.y + b.height)) + 40;
+  return { boxes, totalW, totalH };
 })();
+
+function sectorBoxById(id: string): SectorBox | undefined {
+  return LAYOUT.boxes.find((b) => b.sector.id === id);
+}
 
 export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(0.9);
+  const [scale, setScale] = useState(0.6);
   const [tx, setTx] = useState(0);
   const [ty, setTy] = useState(0);
   const [is3D, setIs3D] = useState(true);
@@ -80,11 +84,11 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
     if (!el) return;
     const { clientWidth, clientHeight } = el;
     const s = Math.min(
-      (clientWidth - 80) / LAYOUT.totalW,
-      (clientHeight - 80) / LAYOUT.totalH,
+      (clientWidth - 60) / LAYOUT.totalW,
+      (clientHeight - 60) / LAYOUT.totalH,
       1.2,
     );
-    setScale(Math.max(0.4, s));
+    setScale(Math.max(0.25, s));
     setTx((clientWidth - LAYOUT.totalW * s) / 2);
     setTy((clientHeight - LAYOUT.totalH * s) / 2);
   };
@@ -94,18 +98,17 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Focus on a plot when requested (from search)
   useEffect(() => {
     if (!focusId) return;
     const plot = PLOTS.find((p) => p.id === focusId);
     if (!plot) return;
-    const sector = LAYOUT.sectors.find((s) => s.id === plot.sectorId);
-    if (!sector) return;
+    const box = sectorBoxById(plot.sectorId);
+    if (!box) return;
     const el = containerRef.current;
     if (!el) return;
-    const px = sector.x + SECTOR_PADDING + plot.col * (CELL + GAP) + CELL / 2;
-    const py = sector.y + SECTOR_PADDING + 24 + plot.row * (CELL + GAP) + CELL / 2;
-    const newScale = 1.4;
+    const px = box.x + SECTOR_PADDING_X + plot.col * (CELL + GAP) + CELL / 2;
+    const py = box.y + SECTOR_PADDING_TOP + plot.row * (CELL + GAP) + CELL / 2;
+    const newScale = 1.6;
     setScale(newScale);
     setTx(el.clientWidth / 2 - px * newScale);
     setTy(el.clientHeight / 2 - py * newScale);
@@ -119,7 +122,7 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
     const delta = -e.deltaY * 0.0015;
-    const newScale = Math.min(2.5, Math.max(0.3, scale * (1 + delta)));
+    const newScale = Math.min(3, Math.max(0.2, scale * (1 + delta)));
     const k = newScale / scale;
     setTx(mx - (mx - tx) * k);
     setTy(my - (my - ty) * k);
@@ -141,7 +144,6 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
 
   return (
     <div className="relative h-full w-full overflow-hidden rounded-2xl border border-border bg-[radial-gradient(circle_at_20%_10%,oklch(0.62_0.18_235/0.08),transparent_60%),radial-gradient(circle_at_80%_90%,oklch(0.42_0.12_250/0.1),transparent_60%)]">
-      {/* Grid backdrop */}
       <div
         className="absolute inset-0 opacity-[0.07]"
         style={{
@@ -153,28 +155,13 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
 
       {/* Controls */}
       <div className="absolute right-4 top-4 z-10 flex flex-col gap-2">
-        <Button
-          size="icon"
-          variant="secondary"
-          className="glass-strong h-9 w-9"
-          onClick={() => setScale((s) => Math.min(2.5, s * 1.2))}
-        >
+        <Button size="icon" variant="secondary" className="glass-strong h-9 w-9" onClick={() => setScale((s) => Math.min(3, s * 1.2))}>
           <Plus className="h-4 w-4" />
         </Button>
-        <Button
-          size="icon"
-          variant="secondary"
-          className="glass-strong h-9 w-9"
-          onClick={() => setScale((s) => Math.max(0.3, s / 1.2))}
-        >
+        <Button size="icon" variant="secondary" className="glass-strong h-9 w-9" onClick={() => setScale((s) => Math.max(0.2, s / 1.2))}>
           <Minus className="h-4 w-4" />
         </Button>
-        <Button
-          size="icon"
-          variant="secondary"
-          className="glass-strong h-9 w-9"
-          onClick={center}
-        >
+        <Button size="icon" variant="secondary" className="glass-strong h-9 w-9" onClick={center}>
           <Locate className="h-4 w-4" />
         </Button>
         <Button
@@ -191,38 +178,22 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
       {/* Live HUD */}
       <div className="glass-strong pointer-events-none absolute left-4 top-4 z-10 flex items-center gap-4 rounded-xl px-4 py-2.5 text-xs">
         <div>
-          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-            Ocupación
-          </div>
-          <div className="text-lg font-semibold tabular-nums text-foreground">
-            {liveStats.occPct}%
-          </div>
+          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Ocupación</div>
+          <div className="text-lg font-semibold tabular-nums text-foreground">{liveStats.occPct}%</div>
         </div>
         <div className="h-8 w-px bg-border" />
         <div className="flex gap-3">
           <div>
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              Libres
-            </div>
-            <div className="text-sm font-medium tabular-nums text-[var(--color-success)]">
-              {liveStats.available}
-            </div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Libres</div>
+            <div className="text-sm font-medium tabular-nums text-[var(--color-success)]">{liveStats.available}</div>
           </div>
           <div>
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              Parc.
-            </div>
-            <div className="text-sm font-medium tabular-nums text-[var(--color-warning)]">
-              {liveStats.partial}
-            </div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Parc.</div>
+            <div className="text-sm font-medium tabular-nums text-[var(--color-warning)]">{liveStats.partial}</div>
           </div>
           <div>
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              Ocup.
-            </div>
-            <div className="text-sm font-medium tabular-nums text-destructive">
-              {liveStats.occupied}
-            </div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Ocup.</div>
+            <div className="text-sm font-medium tabular-nums text-destructive">{liveStats.occupied}</div>
           </div>
         </div>
         {lastEvent && (
@@ -231,12 +202,8 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
             <div className="flex items-center gap-1.5">
               <Activity className="h-3 w-3 animate-pulse text-primary" />
               <div className="max-w-[160px]">
-                <div className="truncate text-xs font-medium text-foreground">
-                  {lastEvent.title}
-                </div>
-                <div className="truncate text-[10px] text-muted-foreground">
-                  {lastEvent.description}
-                </div>
+                <div className="truncate text-xs font-medium text-foreground">{lastEvent.title}</div>
+                <div className="truncate text-[10px] text-muted-foreground">{lastEvent.description}</div>
               </div>
             </div>
           </>
@@ -252,13 +219,14 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
           ["reserved", "Reservada"],
         ].map(([k, label]) => (
           <div key={k} className="flex items-center gap-1.5">
-            <span
-              className="h-2.5 w-2.5 rounded-sm"
-              style={{ background: statusColor(k as Plot["status"]) }}
-            />
+            <span className="h-2.5 w-2.5 rounded-sm" style={{ background: statusColor(k as Plot["status"]) }} />
             <span className="text-muted-foreground">{label}</span>
           </div>
         ))}
+        <div className="ml-2 h-4 w-px bg-border" />
+        <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+          Plano basado en planos originales · Cementerio Parque San Nicolás Renacimiento
+        </span>
       </div>
 
       <div
@@ -269,18 +237,18 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
-        style={{ perspective: "1400px", perspectiveOrigin: "50% 30%" }}
+        style={{ perspective: "1600px", perspectiveOrigin: "50% 25%" }}
       >
         <svg
           width={LAYOUT.totalW}
           height={LAYOUT.totalH}
           style={{
-            transform: `translate(${tx}px, ${ty}px) scale(${scale}) ${is3D ? "rotateX(38deg) rotateZ(-2deg)" : ""}`,
+            transform: `translate(${tx}px, ${ty}px) scale(${scale}) ${is3D ? "rotateX(46deg) rotateZ(-3deg)" : ""}`,
             transformOrigin: "0 0",
             transformStyle: "preserve-3d",
             transition: dragRef.current ? "none" : "transform 350ms ease",
             filter: is3D
-              ? "drop-shadow(0 25px 35px rgba(0,0,0,0.55))"
+              ? "drop-shadow(0 30px 45px rgba(0,0,0,0.6))"
               : "drop-shadow(0 8px 16px rgba(0,0,0,0.3))",
           }}
         >
@@ -290,8 +258,21 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
               <stop offset="55%" stopColor="white" stopOpacity="0" />
             </linearGradient>
             <linearGradient id="sectorBg" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="oklch(0.26 0.04 250 / 0.85)" />
-              <stop offset="100%" stopColor="oklch(0.18 0.03 250 / 0.6)" />
+              <stop offset="0%" stopColor="oklch(0.26 0.04 250 / 0.88)" />
+              <stop offset="100%" stopColor="oklch(0.18 0.03 250 / 0.65)" />
+            </linearGradient>
+            <linearGradient id="avenida" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="oklch(0.32 0.02 240 / 0.6)" />
+              <stop offset="50%" stopColor="oklch(0.45 0.03 240 / 0.7)" />
+              <stop offset="100%" stopColor="oklch(0.32 0.02 240 / 0.6)" />
+            </linearGradient>
+            <radialGradient id="rotondaBg" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="oklch(0.38 0.05 240 / 0.9)" />
+              <stop offset="100%" stopColor="oklch(0.2 0.03 250 / 0.5)" />
+            </radialGradient>
+            <linearGradient id="temploBg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="oklch(0.45 0.08 70 / 0.9)" />
+              <stop offset="100%" stopColor="oklch(0.28 0.05 60 / 0.7)" />
             </linearGradient>
             <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur stdDeviation="3" result="b" />
@@ -301,33 +282,141 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
               </feMerge>
             </filter>
           </defs>
-          {LAYOUT.sectors.map((sector) => {
-            const meta = SECTORS.find((s) => s.id === sector.id)!;
-            const plots = PLOTS.filter((p) => p.sectorId === sector.id);
+
+          {/* Avenida Principal — banda horizontal */}
+          <g>
+            <rect
+              x={0}
+              y={AVENIDA_Y}
+              width={LAYOUT.totalW}
+              height={AVENIDA_H}
+              fill="url(#avenida)"
+              stroke="oklch(1 0 0 / 0.08)"
+            />
+            <line
+              x1={0}
+              x2={LAYOUT.totalW}
+              y1={AVENIDA_Y + AVENIDA_H / 2}
+              y2={AVENIDA_Y + AVENIDA_H / 2}
+              stroke="oklch(0.85 0.05 240 / 0.4)"
+              strokeWidth={0.6}
+              strokeDasharray="6 6"
+            />
+            <text
+              x={LAYOUT.totalW / 2}
+              y={AVENIDA_Y - 4}
+              textAnchor="middle"
+              fill="oklch(0.7 0.05 240 / 0.7)"
+              fontSize={9}
+              style={{ letterSpacing: "0.3em" }}
+            >
+              AVENIDA PRINCIPAL
+            </text>
+          </g>
+
+          {LAYOUT.boxes.map((box) => {
+            const s = box.sector;
+
+            if (s.shape === "landmark") {
+              return (
+                <g key={s.id} transform={`translate(${box.x},${box.y})`}>
+                  {is3D && (
+                    <rect x={4} y={6} width={box.width} height={box.height} rx={10} fill="rgba(0,0,0,0.55)" />
+                  )}
+                  <rect
+                    width={box.width}
+                    height={box.height}
+                    rx={10}
+                    fill="url(#temploBg)"
+                    stroke="oklch(0.85 0.08 70 / 0.5)"
+                  />
+                  {/* cruz simbólica */}
+                  <g transform={`translate(${box.width / 2},${box.height / 2})`}>
+                    <rect x={-3} y={-30} width={6} height={60} rx={1} fill="oklch(0.95 0.04 70)" opacity={0.8} />
+                    <rect x={-16} y={-12} width={32} height={6} rx={1} fill="oklch(0.95 0.04 70)" opacity={0.8} />
+                  </g>
+                  <text
+                    x={box.width / 2}
+                    y={box.height - 16}
+                    textAnchor="middle"
+                    fill="oklch(0.95 0.04 70)"
+                    fontSize={11}
+                    fontWeight={600}
+                    style={{ letterSpacing: "0.15em" }}
+                  >
+                    {s.landmark}
+                  </text>
+                </g>
+              );
+            }
+
+            if (s.shape === "rotonda") {
+              const cx = box.width / 2;
+              const cy = box.height / 2;
+              return (
+                <g key={s.id} transform={`translate(${box.x},${box.y})`}>
+                  {is3D && (
+                    <circle cx={cx + 4} cy={cy + 6} r={box.width / 2} fill="rgba(0,0,0,0.55)" />
+                  )}
+                  <circle cx={cx} cy={cy} r={box.width / 2} fill="url(#rotondaBg)" stroke="oklch(1 0 0 / 0.18)" />
+                  <circle cx={cx} cy={cy} r={box.width / 2 - 18} fill="none" stroke="oklch(1 0 0 / 0.15)" strokeDasharray="3 4" />
+                  {/* sala de máquinas */}
+                  <rect x={cx - 38} y={cy - 20} width={50} height={30} rx={3} fill="oklch(0.35 0.04 240 / 0.85)" stroke="oklch(1 0 0 / 0.2)" />
+                  <text x={cx - 13} y={cy - 2} textAnchor="middle" fill="oklch(0.85 0.02 240)" fontSize={5}>SALA DE MÁQUINAS</text>
+                  {/* cisterna */}
+                  <circle cx={cx + 25} cy={cy + 25} r={18} fill="oklch(0.4 0.12 230 / 0.55)" stroke="oklch(0.7 0.15 230 / 0.5)" />
+                  <text x={cx + 25} y={cy + 27} textAnchor="middle" fill="oklch(0.92 0.04 230)" fontSize={5}>CISTERNA</text>
+                  <text
+                    x={cx}
+                    y={28}
+                    textAnchor="middle"
+                    fill="oklch(0.85 0.04 240)"
+                    fontSize={11}
+                    fontWeight={600}
+                    style={{ letterSpacing: "0.25em" }}
+                  >
+                    S12 · ROTONDA
+                  </text>
+                </g>
+              );
+            }
+
+            // Grid sector
+            const plots = PLOTS.filter((p) => p.sectorId === s.id);
             return (
-              <g key={sector.id} transform={`translate(${sector.x},${sector.y})`}>
+              <g key={s.id} transform={`translate(${box.x},${box.y})`}>
+                {is3D && (
+                  <rect x={2} y={4} width={box.width} height={box.height} rx={10} fill="rgba(0,0,0,0.45)" />
+                )}
                 <rect
-                  x={0}
-                  y={0}
-                  width={sector.width}
-                  height={sector.height}
-                  rx={14}
+                  width={box.width}
+                  height={box.height}
+                  rx={10}
                   fill="url(#sectorBg)"
                   stroke="oklch(1 0 0 / 0.12)"
                 />
-                <text
-                  x={SECTOR_PADDING}
-                  y={20}
-                  fill="oklch(0.85 0.01 240)"
-                  fontSize={12}
-                  fontWeight={600}
-                  style={{ letterSpacing: "0.05em" }}
-                >
-                  {meta.name.toUpperCase()}
+                <text x={SECTOR_PADDING_X} y={18} fill="oklch(0.85 0.01 240)" fontSize={11} fontWeight={700} style={{ letterSpacing: "0.1em" }}>
+                  {s.id.toUpperCase()}
                 </text>
+                <text x={box.width - SECTOR_PADDING_X} y={18} textAnchor="end" fill="oklch(0.65 0.02 240)" fontSize={8}>
+                  {s.rows}×{s.cols}
+                </text>
+                {/* file headers F1..Fn */}
+                {Array.from({ length: s.cols }).map((_, c) => (
+                  <text
+                    key={`fh-${c}`}
+                    x={SECTOR_PADDING_X + c * (CELL + GAP) + CELL / 2}
+                    y={SECTOR_PADDING_TOP - 4}
+                    textAnchor="middle"
+                    fill="oklch(0.55 0.02 240)"
+                    fontSize={5.5}
+                  >
+                    F{c + 1}
+                  </text>
+                ))}
                 {plots.map((p) => {
-                  const x = SECTOR_PADDING + p.col * (CELL + GAP);
-                  const y = SECTOR_PADDING + 24 + p.row * (CELL + GAP);
+                  const x = SECTOR_PADDING_X + p.col * (CELL + GAP);
+                  const y = SECTOR_PADDING_TOP + p.row * (CELL + GAP);
                   const isSelected = selectedId === p.id;
                   return (
                     <g
@@ -341,11 +430,7 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
                       onPointerEnter={(e) => {
                         const rect = containerRef.current?.getBoundingClientRect();
                         if (!rect) return;
-                        setHover({
-                          plot: p,
-                          x: e.clientX - rect.left,
-                          y: e.clientY - rect.top,
-                        });
+                        setHover({ plot: p, x: e.clientX - rect.left, y: e.clientY - rect.top });
                       }}
                       onPointerMove={(e) => {
                         const rect = containerRef.current?.getBoundingClientRect();
@@ -358,72 +443,30 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
                       }}
                       onPointerLeave={() => setHover((h) => (h?.plot.id === p.id ? null : h))}
                     >
-                      {/* shadow base for 3D depth */}
                       {is3D && (
-                        <rect
-                          x={1}
-                          y={3}
-                          width={CELL}
-                          height={CELL}
-                          rx={4}
-                          fill="rgba(0,0,0,0.55)"
-                        />
+                        <rect x={1} y={3} width={CELL} height={CELL} rx={3} fill="rgba(0,0,0,0.55)" />
                       )}
                       <rect
                         width={CELL}
                         height={CELL}
-                        rx={4}
+                        rx={3}
                         fill={statusColor(p.status)}
-                        opacity={isSelected ? 1 : 0.88}
+                        opacity={isSelected ? 1 : 0.9}
                         stroke={isSelected ? "white" : "oklch(1 0 0 / 0.12)"}
                         strokeWidth={isSelected ? 2 : 1}
                         filter={isSelected ? "url(#glow)" : undefined}
                       >
                         <title>{`${p.code} — ${statusLabel(p.status)}`}</title>
                       </rect>
-                      {/* glossy highlight */}
-                      <rect
-                        width={CELL}
-                        height={CELL / 2}
-                        rx={4}
-                        fill="url(#cellHi)"
-                        pointerEvents="none"
-                      />
+                      <rect width={CELL} height={CELL / 2} rx={3} fill="url(#cellHi)" pointerEvents="none" />
                       {p.status === "partial" && (
-                        <circle
-                          cx={CELL / 2}
-                          cy={CELL / 2}
-                          r={CELL / 2}
-                          fill="none"
-                          stroke="white"
-                          strokeWidth={0.6}
-                          opacity={0.5}
-                        >
-                          <animate
-                            attributeName="r"
-                            from={CELL / 4}
-                            to={CELL / 1.6}
-                            dur="1.8s"
-                            repeatCount="indefinite"
-                          />
-                          <animate
-                            attributeName="opacity"
-                            from="0.7"
-                            to="0"
-                            dur="1.8s"
-                            repeatCount="indefinite"
-                          />
+                        <circle cx={CELL / 2} cy={CELL / 2} r={CELL / 2} fill="none" stroke="white" strokeWidth={0.6} opacity={0.5}>
+                          <animate attributeName="r" from={CELL / 4} to={CELL / 1.6} dur="1.8s" repeatCount="indefinite" />
+                          <animate attributeName="opacity" from="0.7" to="0" dur="1.8s" repeatCount="indefinite" />
                         </circle>
                       )}
                       {p.type === "socio" && (
-                        <circle
-                          cx={CELL - 4}
-                          cy={4}
-                          r={2.5}
-                          fill="oklch(0.72 0.18 235)"
-                          stroke="white"
-                          strokeWidth={0.5}
-                        />
+                        <circle cx={CELL - 3} cy={3} r={2} fill="oklch(0.72 0.18 235)" stroke="white" strokeWidth={0.5} />
                       )}
                     </g>
                   );
@@ -449,20 +492,14 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
             </span>
           </div>
           <div className="mt-1 flex items-center gap-1.5">
-            <span
-              className="h-2 w-2 rounded-full"
-              style={{ background: statusColor(hover.plot.status) }}
-            />
+            <span className="h-2 w-2 rounded-full" style={{ background: statusColor(hover.plot.status) }} />
             <span className="text-foreground">{statusLabel(hover.plot.status)}</span>
           </div>
           <div className="mt-0.5 text-muted-foreground">
-            {hover.plot.spots.filter((s) => !s.occupant).length} lugar(es) libre(s) de{" "}
-            {hover.plot.spots.length}
+            {hover.plot.spots.filter((s) => !s.occupant).length} lugar(es) libre(s) de {hover.plot.spots.length}
           </div>
           {hover.plot.spots.some((s) => !s.occupant) && (
-            <div className="mt-1 text-[10px] font-medium text-primary">
-              Click para abrir apertura
-            </div>
+            <div className="mt-1 text-[10px] font-medium text-primary">Click para abrir apertura</div>
           )}
         </div>
       )}
