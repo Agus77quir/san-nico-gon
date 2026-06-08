@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
+
+import { useSidebar } from "@/components/ui/sidebar";
 
 import { AppShell } from "@/components/app-shell";
 import { CemeteryMap } from "@/components/cemetery-map";
