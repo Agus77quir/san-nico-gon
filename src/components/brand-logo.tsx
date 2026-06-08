@@ -1,4 +1,4 @@
-import logoAsset from "@/assets/logo.png.asset.json";
+import logoUrl from "@/assets/logo.png";
 import { cn } from "@/lib/utils";
 
 interface Props {
