@@ -161,10 +161,10 @@ function Dashboard() {
 
         {/* KPIs */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Total parcelas" value={STATS.total} icon={Grid3x3} accent="var(--color-primary-glow)" />
-          <StatCard label="Municipales" value={STATS.municipal} hint="3 lugares c/u" icon={Building2} accent="var(--color-chart-2)" />
-          <StatCard label="De socios" value={STATS.socio} hint="Familiares" icon={Users} accent="var(--color-success)" />
-          <StatCard label="Fallecidos registrados" value={STATS.deceasedCount} icon={TrendingUp} accent="var(--color-warning)" />
+          <StatCard label="Total parcelas" value={STATS.total} icon={Grid3x3} accent="var(--color-primary-glow)" chart="area" />
+          <StatCard label="Municipales" value={STATS.municipal} hint="3 lugares c/u" icon={Building2} accent="var(--color-chart-2)" chart="bar" />
+          <StatCard label="De socios" value={STATS.socio} hint="Familiares" icon={Users} accent="var(--color-success)" chart="area" />
+          <StatCard label="Fallecidos registrados" value={STATS.deceasedCount} icon={TrendingUp} accent="var(--color-warning)" chart="bar" />
         </div>
 
         {/* Occupancy + Sectors */}
