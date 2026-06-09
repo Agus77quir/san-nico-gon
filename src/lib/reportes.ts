@@ -1,6 +1,5 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import * as XLSX from "xlsx";
 
 import { PLOTS, SECTORS, STATS, statusLabel, type Plot } from "./demo-data";
 
