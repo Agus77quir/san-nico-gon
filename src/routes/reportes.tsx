@@ -3,7 +3,7 @@ import { FileDown, FileSpreadsheet, FileText, Printer } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
-import { downloadReportExcel, downloadReportPDF, REPORT_DEFS } from "@/lib/reportes";
+import { downloadReportExcel, downloadReportPDF, printReport, REPORT_DEFS } from "@/lib/reportes";
 
 export const Route = createFileRoute("/reportes")({
   head: () => ({
@@ -38,14 +38,7 @@ function ReportesPage() {
               <Button size="sm" variant="outline" onClick={() => downloadReportExcel(r.id)}>
                 <FileSpreadsheet className="mr-1 h-3.5 w-3.5" /> Excel
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  downloadReportPDF(r.id);
-                  setTimeout(() => window.print(), 300);
-                }}
-              >
+              <Button size="sm" variant="outline" onClick={() => printReport(r.id)}>
                 <Printer className="mr-1 h-3.5 w-3.5" /> Imprimir
               </Button>
             </div>
