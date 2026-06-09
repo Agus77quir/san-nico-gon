@@ -1,6 +1,5 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import * as XLSX from "xlsx";
 
 import { PLOTS, SECTORS, STATS, statusLabel, type Plot } from "./demo-data";
 
@@ -128,8 +127,9 @@ export function printReport(id: ReportId) {
   window.open(url, "_blank");
 }
 
-export function downloadReportExcel(id: ReportId) {
+export async function downloadReportExcel(id: ReportId) {
   const { title, columns, rows } = buildReport(id);
+  const XLSX = await import("xlsx");
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet([columns, ...rows]);
   XLSX.utils.book_append_sheet(wb, ws, title.slice(0, 30));
