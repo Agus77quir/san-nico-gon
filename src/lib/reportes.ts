@@ -98,6 +98,36 @@ export function downloadReportPDF(id: ReportId) {
   doc.save(`${id}.pdf`);
 }
 
+export function printReport(id: ReportId) {
+  const { title, columns, rows } = buildReport(id);
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const W = doc.internal.pageSize.getWidth();
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.text("San Nicolás · Renacimiento", 40, 40);
+  doc.setFontSize(11);
+  doc.text(title, 40, 58);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.text(`Generado: ${new Date().toLocaleString("es-AR")}`, 40, 74);
+  doc.text(`Total registros: ${rows.length}`, W - 40, 74, { align: "right" });
+
+  autoTable(doc, {
+    startY: 90,
+    head: [columns],
+    body: rows.map((r) => r.map((c) => String(c))),
+    styles: { fontSize: 8, cellPadding: 4 },
+    headStyles: { fillColor: [40, 60, 110], textColor: 255 },
+    alternateRowStyles: { fillColor: [245, 247, 252] },
+    margin: { left: 40, right: 40 },
+  });
+
+  doc.autoPrint();
+  const url = doc.output("bloburl");
+  window.open(url, "_blank");
+}
+
 export function downloadReportExcel(id: ReportId) {
   const { title, columns, rows } = buildReport(id);
   const wb = XLSX.utils.book_new();
