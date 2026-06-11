@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sidebar";
 import { BrandLogo } from "@/components/brand-logo";
 
-const mainItems = [
+constmainItems = [
   { title: "Dash", url: "/", icon: LayoutDashboard },
   { title: "Plano interactivo", url: "/plano", icon: Map },
   { title: "Parcelas", url: "/parcelas", icon: Grid3x3 },
@@ -97,7 +97,7 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border p-3">
         <div className="rounded-lg border border-border bg-card/40 p-3 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
           <div className="font-medium text-foreground">v1.0 · Demo</div>
-          <div className="mt-1">Datos de muestra — UI primero</div>
+          <div className="mt-1">Derechos San Nicolás P.A - 2026</div>
         </div>
       </SidebarFooter>
     </Sidebar>
