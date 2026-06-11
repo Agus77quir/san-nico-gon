@@ -1,14 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import {
-  LayoutDashboard,
-  Map,
-  Grid3x3,
-  Users,
-  FileText,
-  Settings,
-  Shield,
-  ClipboardList,
-} from "lucide-react";
+import { LayoutDashboard, Map, Grid3x3, Users, FileText, Settings, Shield, ClipboardList } from "lucide-react";
 
 import {
   Sidebar,
@@ -26,7 +17,7 @@ import {
 import { BrandLogo } from "@/components/brand-logo";
 
 const mainItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Dash", url: "/", icon: LayoutDashboard },
   { title: "Plano interactivo", url: "/plano", icon: Map },
   { title: "Parcelas", url: "/parcelas", icon: Grid3x3 },
   { title: "Solicitudes", url: "/servicios", icon: ClipboardList },
@@ -45,8 +36,7 @@ export function AppSidebar() {
   const currentPath = useRouterState({
     select: (router) => router.location.pathname,
   });
-  const isActive = (path: string) =>
-    path === "/" ? currentPath === "/" : currentPath.startsWith(path);
+  const isActive = (path: string) => (path === "/" ? currentPath === "/" : currentPath.startsWith(path));
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
