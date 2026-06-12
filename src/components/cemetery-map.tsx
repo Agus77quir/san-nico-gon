@@ -414,6 +414,8 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
     let raf = 0;
     const update = () => {
       const w = el.clientWidth;
+      const h = el.clientHeight;
+      console.log("[map] update", { w, h });
       if (!w) return;
       const next = profileFor(w);
       profileRef.current = next;
