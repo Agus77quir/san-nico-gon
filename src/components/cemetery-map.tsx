@@ -393,6 +393,20 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
               <stop offset="0%" stopColor="oklch(0.38 0.05 240 / 0.9)" />
               <stop offset="100%" stopColor="oklch(0.2 0.03 250 / 0.5)" />
             </radialGradient>
+            <radialGradient id="chapelDome" cx="35%" cy="30%" r="75%">
+              <stop offset="0%" stopColor="oklch(0.92 0.04 70)" />
+              <stop offset="55%" stopColor="oklch(0.7 0.07 60)" />
+              <stop offset="100%" stopColor="oklch(0.35 0.06 50)" />
+            </radialGradient>
+            <radialGradient id="chapelBody" cx="30%" cy="35%" r="80%">
+              <stop offset="0%" stopColor="oklch(0.82 0.05 70)" />
+              <stop offset="60%" stopColor="oklch(0.55 0.07 60)" />
+              <stop offset="100%" stopColor="oklch(0.28 0.05 55)" />
+            </radialGradient>
+            <radialGradient id="chapelShadow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="oklch(0 0 0 / 0.55)" />
+              <stop offset="100%" stopColor="oklch(0 0 0 / 0)" />
+            </radialGradient>
             <linearGradient id="temploBg" x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stopColor="oklch(0.45 0.08 70 / 0.9)" />
               <stop offset="100%" stopColor="oklch(0.28 0.05 60 / 0.7)" />
