@@ -4,6 +4,8 @@ import {
   useMemo,
   useRef,
   useState,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
   type WheelEvent,
   type PointerEvent,
 } from "react";
@@ -60,6 +62,21 @@ const LAYOUT = (() => {
 function sectorBoxById(id: string): SectorBox | undefined {
   return LAYOUT.boxes.find((b) => b.sector.id === id);
 }
+
+// Índices estáticos — se calculan una sola vez al cargar el módulo.
+const PLOTS_BY_SECTOR: Map<string, Plot[]> = (() => {
+  const m = new Map<string, Plot[]>();
+  for (const p of PLOTS) {
+    let arr = m.get(p.sectorId);
+    if (!arr) {
+      arr = [];
+      m.set(p.sectorId, arr);
+    }
+    arr.push(p);
+  }
+  return m;
+})();
+const PLOT_BY_ID: Map<string, Plot> = new Map(PLOTS.map((p) => [p.id, p]));
 
 type Device = "mobile" | "tablet" | "desktop";
 
@@ -222,16 +239,22 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
     [scheduleApply],
   );
 
+  const didDragRef = useRef(false);
+
   const onPointerDown = useCallback((e: PointerEvent) => {
     (e.target as Element).setPointerCapture?.(e.pointerId);
     dragRef.current = { x: e.clientX, y: e.clientY, tx: txRef.current, ty: tyRef.current };
+    didDragRef.current = false;
   }, []);
 
   const onPointerMove = useCallback(
     (e: PointerEvent) => {
       if (!dragRef.current) return;
-      txRef.current = dragRef.current.tx + e.clientX - dragRef.current.x;
-      tyRef.current = dragRef.current.ty + e.clientY - dragRef.current.y;
+      const dx = e.clientX - dragRef.current.x;
+      const dy = e.clientY - dragRef.current.y;
+      if (!didDragRef.current && dx * dx + dy * dy > 16) didDragRef.current = true;
+      txRef.current = dragRef.current.tx + dx;
+      tyRef.current = dragRef.current.ty + dy;
       scheduleApply();
     },
     [scheduleApply],
@@ -240,6 +263,61 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
   const onPointerUp = useCallback(() => {
     dragRef.current = null;
   }, []);
+
+  // Selección renderizada como overlay para no re-renderizar las ~13k parcelas.
+  const selectionOverlay = useMemo(() => {
+    if (!selectedId) return null;
+    const p = PLOT_BY_ID.get(selectedId);
+    if (!p) return null;
+    const box = sectorBoxById(p.sectorId);
+    if (!box) return null;
+    const x = box.x + SECTOR_PADDING_X + p.col * (CELL + GAP);
+    const y = box.y + SECTOR_PADDING_TOP + p.row * (CELL + GAP);
+    return (
+      <rect
+        x={x}
+        y={y}
+        width={CELL}
+        height={CELL}
+        rx={3}
+        fill="none"
+        stroke="white"
+        strokeWidth={2.4}
+        pointerEvents="none"
+      />
+    );
+  }, [selectedId]);
+
+  // Delegación de eventos a nivel SVG (un solo listener para todas las parcelas).
+  const onSvgClick = useCallback(
+    (e: ReactMouseEvent) => {
+      if (didDragRef.current) return;
+      const id = (e.target as Element).getAttribute?.("data-plot-id");
+      if (!id) return;
+      const plot = PLOT_BY_ID.get(id);
+      if (plot) onSelect(plot);
+    },
+    [onSelect],
+  );
+
+  const onSvgPointerMove = useCallback((e: ReactPointerEvent) => {
+    const el = containerRef.current;
+    if (!el) return;
+    const id = (e.target as Element).getAttribute?.("data-plot-id");
+    if (!id) {
+      setHover((h) => (h ? null : h));
+      return;
+    }
+    setHover((h) => {
+      if (h && h.plot.id === id) return h; // mismo plot → no re-render
+      const plot = PLOT_BY_ID.get(id);
+      if (!plot) return h;
+      const rect = el.getBoundingClientRect();
+      return { plot, x: e.clientX - rect.left, y: e.clientY - rect.top };
+    });
+  }, []);
+
+  const onSvgPointerLeave = useCallback(() => setHover(null), []);
 
   const zoomBy = useCallback(
     (factor: number) => {
@@ -374,6 +452,9 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
           className="map-svg"
           width={LAYOUT.totalW}
           height={LAYOUT.totalH}
+          onClick={onSvgClick}
+          onPointerMove={onSvgPointerMove}
+          onPointerLeave={onSvgPointerLeave}
           style={{
             transformOrigin: "0 0",
             transformStyle: "preserve-3d",
@@ -605,7 +686,7 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
             }
 
 
-            const plots = PLOTS.filter((p) => p.sectorId === s.id);
+            const plots = PLOTS_BY_SECTOR.get(s.id) ?? [];
             return (
               <g key={s.id} transform={`translate(${box.x},${box.y})`}>
                 <rect width={box.width} height={box.height} rx={10} fill="url(#sectorBg)" stroke="oklch(1 0 0 / 0.12)" />
@@ -627,59 +708,47 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
                     F{c + 1}
                   </text>
                 ))}
-                {plots.map((p) => {
-                  const x = SECTOR_PADDING_X + p.col * (CELL + GAP);
-                  const y = SECTOR_PADDING_TOP + p.row * (CELL + GAP);
-                  const isSelected = selectedId === p.id;
-                  return (
-                    <g
-                      key={p.id}
-                      transform={`translate(${x},${y})`}
-                      style={{ cursor: "pointer" }}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelect(p);
-                      }}
-                      onPointerEnter={(e) => {
-                        const rect = containerRef.current?.getBoundingClientRect();
-                        if (!rect) return;
-                        setHover({ plot: p, x: e.clientX - rect.left, y: e.clientY - rect.top });
-                      }}
-                      onPointerLeave={() => setHover((h) => (h?.plot.id === p.id ? null : h))}
-                    >
+                {/* Parcelas — sin handlers por celda (event delegation a nivel SVG) */}
+                <g style={{ cursor: "pointer" }}>
+                  {plots.map((p) => {
+                    const x = SECTOR_PADDING_X + p.col * (CELL + GAP);
+                    const y = SECTOR_PADDING_TOP + p.row * (CELL + GAP);
+                    return (
                       <rect
+                        key={p.id}
+                        data-plot-id={p.id}
+                        x={x}
+                        y={y}
                         width={CELL}
                         height={CELL}
                         rx={3}
                         fill={statusColor(p.status)}
-                        opacity={isSelected ? 1 : 0.92}
-                        stroke={isSelected ? "white" : "oklch(1 0 0 / 0.12)"}
-                        strokeWidth={isSelected ? 2 : 1}
-                      >
-                        <title>{`${p.code} — ${statusLabel(p.status)}`}</title>
-                      </rect>
-                      {p.status === "partial" && (
-                        <rect
-                          className="plot-pulse"
-                          width={CELL}
-                          height={CELL}
-                          rx={3}
-                          fill="none"
-                          stroke="white"
-                          strokeWidth={0.8}
-                          pointerEvents="none"
-                        />
-                      )}
-                      {p.type === "socio" && (
-                        <circle cx={CELL - 3} cy={3} r={2} fill="oklch(0.72 0.18 235)" />
-                      )}
-                    </g>
-                  );
-                })}
+                        opacity={0.92}
+                        stroke="oklch(1 0 0 / 0.12)"
+                        strokeWidth={1}
+                      />
+                    );
+                  })}
+                </g>
+                {/* Marcadores socio (sin eventos) */}
+                <g pointerEvents="none">
+                  {plots.map((p) =>
+                    p.type === "socio" ? (
+                      <circle
+                        key={`s-${p.id}`}
+                        cx={SECTOR_PADDING_X + p.col * (CELL + GAP) + CELL - 3}
+                        cy={SECTOR_PADDING_TOP + p.row * (CELL + GAP) + 3}
+                        r={2}
+                        fill="oklch(0.72 0.18 235)"
+                      />
+                    ) : null,
+                  )}
+                </g>
               </g>
             );
           })}
+          {/* Overlay de selección — separado del SVG estático para no re-renderizar todo */}
+          {selectionOverlay}
         </svg>
       </div>
 
