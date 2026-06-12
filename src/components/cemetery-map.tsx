@@ -24,10 +24,10 @@ const GAP = 3;
 const SECTOR_PADDING_X = 14;
 const SECTOR_PADDING_TOP = 24;
 const SECTOR_PADDING_BOTTOM = 8;
-const TEMPLO_W = 180;
-const TEMPLO_H = 230;
-const ROTONDA_SIZE = 280;
-const AVENIDA_Y = 250;
+const TEMPLO_W = 220;
+const TEMPLO_H = 280;
+const ROTONDA_SIZE = 320;
+const AVENIDA_Y = 560;
 const AVENIDA_H = 18;
 
 interface SectorBox {
