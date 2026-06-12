@@ -436,7 +436,12 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
   }, [center, profile.device]);
 
   useEffect(() => {
-    center(true);
+    const t1 = requestAnimationFrame(() => center(true));
+    const t2 = window.setTimeout(() => center(false), 120);
+    return () => {
+      cancelAnimationFrame(t1);
+      clearTimeout(t2);
+    };
   }, [is3D, profile, center]);
 
   useEffect(() => {
