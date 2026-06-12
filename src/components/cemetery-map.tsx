@@ -310,6 +310,17 @@ function drawBaseMap(ctx: CanvasRenderingContext2D, palette: MapPalette) {
     ctx.arc(item.x + CELL - 3, item.y + 3, 2, 0, Math.PI * 2);
     ctx.fill();
   }
+
+  // Número de parcela en cada celda
+  ctx.font = "700 9px Inter, system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "rgba(15,23,42,.78)";
+  for (const status of STATUS_ORDER) {
+    for (const item of PLOT_SPRITES.byStatus[status]) {
+      ctx.fillText(String(item.plot.col + 1), item.x + CELL / 2, item.y + CELL / 2 + 0.5);
+    }
+  }
 }
 
 function plotAtMapPoint(x: number, y: number): Plot | undefined {
