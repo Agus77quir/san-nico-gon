@@ -201,20 +201,7 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
   const [hover, setHover] = useState<{ plot: Plot; x: number; y: number } | null>(null);
 
   const notifications = useNotifications();
-  const liveStats = useMemo(() => {
-    const spotsTotal = PLOTS.length * 3;
-    const spotsOcc = PLOTS.reduce(
-      (n, p) => n + p.spots.filter((s) => s.occupant).length,
-      0,
-    );
-    return {
-      total: PLOTS.length,
-      occupied: PLOTS.filter((p) => p.status === "occupied").length,
-      partial: PLOTS.filter((p) => p.status === "partial").length,
-      available: PLOTS.filter((p) => p.status === "available").length,
-      occPct: Math.round((spotsOcc / spotsTotal) * 100),
-    };
-  }, [notifications]);
+  const liveStats = BASE_STATS;
   const lastEvent = notifications[0];
 
   const applyTransform = useCallback((animate = false) => {
@@ -369,9 +356,11 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
   const onSvgClick = useCallback(
     (e: ReactMouseEvent) => {
       if (didDragRef.current) return;
-      const id = (e.target as Element).getAttribute?.("data-plot-id");
-      if (!id) return;
-      const plot = PLOT_BY_ID.get(id);
+      const svg = svgRef.current;
+      if (!svg) return;
+      const point = eventToSvgPoint(svg, e);
+      if (!point) return;
+      const plot = plotAtSvgPoint(point.x, point.y);
       if (plot) onSelect(plot);
     },
     [onSelect],
@@ -379,16 +368,16 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
 
   const onSvgPointerMove = useCallback((e: ReactPointerEvent) => {
     const el = containerRef.current;
-    if (!el) return;
-    const id = (e.target as Element).getAttribute?.("data-plot-id");
-    if (!id) {
+    const svg = svgRef.current;
+    if (!el || !svg) return;
+    const point = eventToSvgPoint(svg, e);
+    const plot = point ? plotAtSvgPoint(point.x, point.y) : undefined;
+    if (!plot) {
       setHover((h) => (h ? null : h));
       return;
     }
     setHover((h) => {
-      if (h && h.plot.id === id) return h; // mismo plot → no re-render
-      const plot = PLOT_BY_ID.get(id);
-      if (!plot) return h;
+      if (h && h.plot.id === plot.id) return h; // mismo plot → no re-render
       const rect = el.getBoundingClientRect();
       return { plot, x: e.clientX - rect.left, y: e.clientY - rect.top };
     });
