@@ -292,7 +292,7 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
 
   // Delegación de eventos a nivel SVG (un solo listener para todas las parcelas).
   const onSvgClick = useCallback(
-    (e: React.MouseEvent) => {
+    (e: ReactMouseEvent) => {
       if (didDragRef.current) return;
       const id = (e.target as Element).getAttribute?.("data-plot-id");
       if (!id) return;
@@ -302,7 +302,7 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
     [onSelect],
   );
 
-  const onSvgPointerMove = useCallback((e: React.PointerEvent) => {
+  const onSvgPointerMove = useCallback((e: ReactPointerEvent) => {
     const el = containerRef.current;
     if (!el) return;
     const id = (e.target as Element).getAttribute?.("data-plot-id");
