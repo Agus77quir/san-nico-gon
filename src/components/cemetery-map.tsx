@@ -389,8 +389,16 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
     canvas.style.height = `${LAYOUT.totalH}px`;
     const ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx) return;
+    const styles = getComputedStyle(document.documentElement);
+    const palette: MapPalette = {
+      available: styles.getPropertyValue("--success").trim(),
+      partial: styles.getPropertyValue("--warning").trim(),
+      occupied: styles.getPropertyValue("--destructive").trim(),
+      reserved: styles.getPropertyValue("--muted-foreground").trim(),
+      socio: styles.getPropertyValue("--primary-glow").trim(),
+    };
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    drawBaseMap(ctx);
+    drawBaseMap(ctx, palette);
   }, []);
 
   useEffect(() => {
