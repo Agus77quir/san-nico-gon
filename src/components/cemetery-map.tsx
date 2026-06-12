@@ -408,15 +408,17 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
     const el = containerRef.current;
     if (!el) return;
     const update = () => {
-      const next = profileFor(el.clientWidth);
-      if (next.device !== profileRef.current.device) setProfile(next);
+      const w = el.clientWidth || window.innerWidth;
+      const next = profileFor(w);
+      profileRef.current = next;
+      if (next.device !== profile.device) setProfile(next);
       center(false);
     };
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [center]);
+  }, [center, profile.device]);
 
   useEffect(() => {
     center(true);
