@@ -371,11 +371,15 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
     if (!el) return;
     const p = profileRef.current;
     const pad = 24;
-    // Cuando hay tilt 3D, la altura proyectada se reduce ~cos(tilt)
     const tiltFactor = is3DRef.current ? Math.cos((p.tilt * Math.PI) / 180) : 1;
-    const fitW = (el.clientWidth - pad) / LAYOUT.totalW;
+    // Ajustar por ALTO (el mapa es muy ancho ~12000px). Permitir pan horizontal.
     const fitH = (el.clientHeight - pad) / (LAYOUT.totalH * tiltFactor);
-    const nextScale = Math.max(p.minScale, Math.min(Math.min(fitW, fitH) * p.fitBoost, p.maxScale));
+    const fitW = (el.clientWidth - pad) / LAYOUT.totalW;
+    // Escala objetivo: mostrar verticalmente todo, pero no menos que un mínimo cómodo
+    let nextScale = fitH * p.fitBoost;
+    // Si el ancho cabe sobrado, agrandar para llenar
+    if (LAYOUT.totalW * nextScale < el.clientWidth) nextScale = Math.max(nextScale, fitW);
+    nextScale = Math.max(p.minScale, Math.min(nextScale, p.maxScale));
     scaleRef.current = nextScale;
     txRef.current = (el.clientWidth - LAYOUT.totalW * nextScale) / 2;
     tyRef.current = (el.clientHeight - LAYOUT.totalH * nextScale * tiltFactor) / 2;
