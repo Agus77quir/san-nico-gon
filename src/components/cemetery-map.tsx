@@ -419,8 +419,8 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
   }, [center]);
 
   useEffect(() => {
-    applyTransform(true);
-  }, [is3D, profile, applyTransform]);
+    center(true);
+  }, [is3D, profile, center]);
 
   useEffect(() => {
     if (!focusId) return;
