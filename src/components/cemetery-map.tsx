@@ -340,7 +340,7 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
   const didDragRef = useRef(false);
   const is3DRef = useRef(true);
   const [is3D, setIs3D] = useState(true);
-  const [profile, setProfile] = useState<DeviceProfile>(() => profileFor(1280));
+  const [profile, setProfile] = useState<DeviceProfile>(() => profileFor(typeof window !== "undefined" ? window.innerWidth : 1280));
   const profileRef = useRef(profile);
   const [hover, setHover] = useState<{ plot: Plot; x: number; y: number } | null>(null);
   const notifications = useNotifications();
