@@ -40,52 +40,151 @@ export type SectorShape = "grid" | "landmark" | "rotonda";
 export interface Sector {
   id: string;
   name: string;
-  /** world-coord x in px (left edge of sector bounding box) */
   x: number;
-  /** world-coord y in px (top edge of sector bounding box) */
   y: number;
   rows: number;
   cols: number;
+  /** cantidad real de parcelas (≤ rows*cols cuando la última fila no está completa) */
+  parcelas: number;
   shape?: SectorShape;
-  /** descriptive label for landmarks */
   landmark?: string;
 }
 
-/**
- * Layout reproduce el plano real del Cementerio Parque San Nicolás Renacimiento:
- *  - Templo Ecuménico al oeste
- *  - S1a / S1b en herradura alrededor del templo
- *  - S1 pequeño junto al templo
- *  - Avenida Principal horizontal en el centro
- *  - S2..S6 al sur de la avenida, S2a..S6a al norte
- *  - S12 rotonda al este (sala de máquinas y cisterna)
- */
-export const SECTORS: Sector[] = [
-  // Landmarks
-  { id: "TEMPLO", name: "Templo Ecuménico", x: 0, y: 110, rows: 0, cols: 0, shape: "landmark", landmark: "TEMPLO ECUMÉNICO" },
-  { id: "ROTONDA", name: "Rotonda · Sala de Máquinas", x: 2050, y: 80, rows: 0, cols: 0, shape: "rotonda", landmark: "ROTONDA" },
+// --- Layout constants (deben coincidir con cemetery-map.tsx) ---
+const CELL = 22;
+const GAP = 3;
+const PAD_X = 14;
+const PAD_TOP = 24;
+const PAD_BOT = 8;
+const AVENIDA_Y = 560;
+const AVENIDA_H = 18;
+const SECTOR_VGAP = 18;
+const SECTOR_HGAP = 14;
 
-  // Núcleo oeste — herradura
-  { id: "S1a", name: "S1a — Herradura Norte", x: 180, y: 10, rows: 4, cols: 7 },
-  { id: "S1b", name: "S1b — Herradura Sur", x: 180, y: 270, rows: 4, cols: 7 },
-  { id: "S1",  name: "S1 — Plazoleta", x: 360, y: 165, rows: 2, cols: 2 },
+const TEMPLO_W = 220;
+const TEMPLO_H = 280;
+const ROTONDA_SIZE = 320;
 
-  // Tramo central — norte / sur de la Avenida Principal
-  { id: "S2a", name: "S2a — Norte", x: 470, y: 10,  rows: 4, cols: 8 },
-  { id: "S2",  name: "S2 — Sur",   x: 470, y: 270, rows: 4, cols: 8 },
+// --- Datos reales del cementerio (PARA AGUSTIN - SISTEMAS.xlsx) ---
+// Sectores pareados: norte (A) y sur. 1A/1B y 2A/2 son zonas sin filas formales.
+interface SectorRaw {
+  id: string;
+  rows: number;
+  parcelas: number;
+  sinFilas?: boolean;
+}
 
-  { id: "S3a", name: "S3a — Norte", x: 720, y: 10,  rows: 5, cols: 10 },
-  { id: "S3",  name: "S3 — Sur",   x: 720, y: 270, rows: 5, cols: 10 },
-
-  { id: "S4a", name: "S4a — Norte", x: 1020, y: 10,  rows: 6, cols: 12 },
-  { id: "S4",  name: "S4 — Sur",   x: 1020, y: 270, rows: 6, cols: 12 },
-
-  { id: "S5a", name: "S5a — Norte", x: 1380, y: 10,  rows: 6, cols: 14 },
-  { id: "S5",  name: "S5 — Sur",   x: 1380, y: 270, rows: 6, cols: 14 },
-
-  { id: "S6a", name: "S6a — Norte", x: 1790, y: 10,  rows: 5, cols: 8 },
-  { id: "S6",  name: "S6 — Sur",   x: 1790, y: 270, rows: 5, cols: 8 },
+const PAIRS: Array<[SectorRaw, SectorRaw]> = [
+  [
+    { id: "1A", rows: 4, parcelas: 34, sinFilas: true },
+    { id: "1B", rows: 4, parcelas: 34, sinFilas: true },
+  ],
+  [
+    { id: "2A", rows: 4, parcelas: 56, sinFilas: true },
+    { id: "2", rows: 4, parcelas: 55, sinFilas: true },
+  ],
+  [{ id: "3A", rows: 14, parcelas: 227 }, { id: "3", rows: 14, parcelas: 225 }],
+  [{ id: "4A", rows: 18, parcelas: 370 }, { id: "4", rows: 18, parcelas: 358 }],
+  [{ id: "5A", rows: 18, parcelas: 323 }, { id: "5", rows: 18, parcelas: 336 }],
+  [{ id: "6A", rows: 18, parcelas: 365 }, { id: "6", rows: 18, parcelas: 325 }],
+  [{ id: "7A", rows: 18, parcelas: 342 }, { id: "7", rows: 18, parcelas: 332 }],
+  [{ id: "8A", rows: 18, parcelas: 352 }, { id: "8", rows: 18, parcelas: 324 }],
+  [{ id: "9A", rows: 18, parcelas: 336 }, { id: "9", rows: 18, parcelas: 291 }],
+  [{ id: "10A", rows: 18, parcelas: 333 }, { id: "10", rows: 19, parcelas: 260 }],
+  [{ id: "11A", rows: 18, parcelas: 322 }, { id: "11", rows: 18, parcelas: 318 }],
+  [{ id: "12A", rows: 14, parcelas: 170 }, { id: "12", rows: 14, parcelas: 159 }],
+  [{ id: "13A", rows: 14, parcelas: 187 }, { id: "13", rows: 14, parcelas: 187 }],
+  [{ id: "14A", rows: 18, parcelas: 346 }, { id: "14", rows: 18, parcelas: 336 }],
+  [{ id: "15A", rows: 18, parcelas: 343 }, { id: "15", rows: 18, parcelas: 354 }],
+  [{ id: "16A", rows: 18, parcelas: 340 }, { id: "16", rows: 18, parcelas: 337 }],
+  [{ id: "17A", rows: 18, parcelas: 325 }, { id: "17", rows: 18, parcelas: 352 }],
+  [{ id: "18A", rows: 18, parcelas: 329 }, { id: "18", rows: 18, parcelas: 337 }],
+  [{ id: "19A", rows: 18, parcelas: 323 }, { id: "19", rows: 18, parcelas: 352 }],
+  [{ id: "20A", rows: 18, parcelas: 316 }, { id: "20", rows: 18, parcelas: 323 }],
+  [{ id: "21A", rows: 18, parcelas: 306 }, { id: "21", rows: 18, parcelas: 333 }],
+  [{ id: "22A", rows: 18, parcelas: 312 }, { id: "22", rows: 18, parcelas: 320 }],
+  [{ id: "23A", rows: 14, parcelas: 236 }, { id: "23", rows: 14, parcelas: 258 }],
 ];
+
+function colsFor(rows: number, parcelas: number, sinFilas?: boolean): number {
+  if (sinFilas) {
+    // Distribución compacta para zonas sin filas formales
+    return Math.ceil(parcelas / rows);
+  }
+  return Math.ceil(parcelas / rows);
+}
+
+function sectorWidth(cols: number): number {
+  return cols * (CELL + GAP) - GAP + PAD_X * 2;
+}
+function sectorHeight(rows: number): number {
+  return rows * (CELL + GAP) - GAP + PAD_TOP + PAD_BOT;
+}
+
+export const SECTORS: Sector[] = (() => {
+  const list: Sector[] = [];
+  let cursor = 40;
+
+  // Templo (capilla) — al oeste, alineado con la avenida
+  list.push({
+    id: "TEMPLO",
+    name: "Templo Ecuménico",
+    x: cursor,
+    y: AVENIDA_Y + AVENIDA_H / 2 - TEMPLO_H / 2,
+    rows: 0,
+    cols: 0,
+    parcelas: 0,
+    shape: "landmark",
+    landmark: "TEMPLO ECUMÉNICO",
+  });
+  cursor += TEMPLO_W + SECTOR_HGAP * 3;
+
+  for (const [n, s] of PAIRS) {
+    const nCols = colsFor(n.rows, n.parcelas, n.sinFilas);
+    const sCols = colsFor(s.rows, s.parcelas, s.sinFilas);
+    const w = Math.max(sectorWidth(nCols), sectorWidth(sCols));
+    const nH = sectorHeight(n.rows);
+    const sH = sectorHeight(s.rows);
+
+    list.push({
+      id: n.id,
+      name: `Sector ${n.id} — Norte`,
+      x: cursor,
+      y: AVENIDA_Y - SECTOR_VGAP - nH,
+      rows: n.rows,
+      cols: nCols,
+      parcelas: n.parcelas,
+    });
+    list.push({
+      id: s.id,
+      name: `Sector ${s.id} — Sur`,
+      x: cursor,
+      y: AVENIDA_Y + AVENIDA_H + SECTOR_VGAP,
+      rows: s.rows,
+      cols: sCols,
+      parcelas: s.parcelas,
+    });
+    cursor += w + SECTOR_HGAP;
+  }
+
+  // Rotonda (capilla circular 3D) — al este
+  cursor += SECTOR_HGAP;
+  list.push({
+    id: "ROTONDA",
+    name: "Rotonda · Capilla",
+    x: cursor,
+    y: AVENIDA_Y + AVENIDA_H / 2 - ROTONDA_SIZE / 2,
+    rows: 0,
+    cols: 0,
+    parcelas: 0,
+    shape: "rotonda",
+    landmark: "ROTONDA",
+  });
+
+  return list;
+})();
+
+// --- Generación de parcelas con datos demo ---
 
 const NAMES = [
   "María González", "Juan Pérez", "Ana Rodríguez", "Carlos López", "Lucía Fernández",
@@ -121,10 +220,7 @@ function makeHolder(seed: number): Holder {
   };
 }
 
-let plotCounter = 0;
-
 function buildPlot(sectorId: string, row: number, col: number, seed: number): Plot {
-  plotCounter++;
   const type: PlotType = seed % 3 === 0 ? "socio" : "municipal";
   const r = seed % 10;
   const occupiedCount = r < 3 ? 0 : r < 6 ? 1 : r < 8 ? 2 : 3;
@@ -145,9 +241,7 @@ function buildPlot(sectorId: string, row: number, col: number, seed: number): Pl
       ? "occupied"
       : "partial";
 
-  // Código tipo S4-F3-12 (Sector - Fila - Plot)
-  const fileLabel = `F${col + 1}`;
-  const code = `${sectorId}-${fileLabel}-${String(row + 1).padStart(2, "0")}`;
+  const code = `${sectorId}-F${row + 1}-${String(col + 1).padStart(2, "0")}`;
 
   return {
     id: `${sectorId}-${row}-${col}`,
@@ -163,14 +257,15 @@ function buildPlot(sectorId: string, row: number, col: number, seed: number): Pl
 }
 
 export const PLOTS: Plot[] = (() => {
-  plotCounter = 0;
   const out: Plot[] = [];
   let seed = 1;
   for (const s of SECTORS) {
     if (s.shape === "landmark" || s.shape === "rotonda") continue;
-    for (let r = 0; r < s.rows; r++) {
-      for (let c = 0; c < s.cols; c++) {
+    let remaining = s.parcelas;
+    for (let r = 0; r < s.rows && remaining > 0; r++) {
+      for (let c = 0; c < s.cols && remaining > 0; c++) {
         out.push(buildPlot(s.id, r, c, seed++));
+        remaining--;
       }
     }
   }
@@ -178,21 +273,17 @@ export const PLOTS: Plot[] = (() => {
 })();
 
 export const STATS = {
-  total: PLOTS.length,
-  municipal: PLOTS.filter((p) => p.type === "municipal").length,
-  socio: PLOTS.filter((p) => p.type === "socio").length,
-  spotsTotal: PLOTS.length * 3,
-  spotsOccupied: PLOTS.reduce(
-    (n, p) => n + p.spots.filter((s) => s.occupant).length,
-    0,
-  ),
-  get spotsAvailable() {
-    return this.spotsTotal - this.spotsOccupied;
+  get total() { return PLOTS.length; },
+  get municipal() { return PLOTS.filter((p) => p.type === "municipal").length; },
+  get socio() { return PLOTS.filter((p) => p.type === "socio").length; },
+  get spotsTotal() { return PLOTS.length * 3; },
+  get spotsOccupied() {
+    return PLOTS.reduce((n, p) => n + p.spots.filter((s) => s.occupant).length, 0);
   },
-  deceasedCount: PLOTS.reduce(
-    (n, p) => n + p.spots.filter((s) => s.occupant).length,
-    0,
-  ),
+  get spotsAvailable() { return this.spotsTotal - this.spotsOccupied; },
+  get deceasedCount() {
+    return PLOTS.reduce((n, p) => n + p.spots.filter((s) => s.occupant).length, 0);
+  },
 };
 
 export function statusColor(s: PlotStatus): string {

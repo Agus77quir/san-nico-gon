@@ -24,10 +24,10 @@ const GAP = 3;
 const SECTOR_PADDING_X = 14;
 const SECTOR_PADDING_TOP = 24;
 const SECTOR_PADDING_BOTTOM = 8;
-const TEMPLO_W = 180;
-const TEMPLO_H = 230;
-const ROTONDA_SIZE = 280;
-const AVENIDA_Y = 250;
+const TEMPLO_W = 220;
+const TEMPLO_H = 280;
+const ROTONDA_SIZE = 320;
+const AVENIDA_Y = 560;
 const AVENIDA_H = 18;
 
 interface SectorBox {
@@ -393,6 +393,20 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
               <stop offset="0%" stopColor="oklch(0.38 0.05 240 / 0.9)" />
               <stop offset="100%" stopColor="oklch(0.2 0.03 250 / 0.5)" />
             </radialGradient>
+            <radialGradient id="chapelDome" cx="35%" cy="30%" r="75%">
+              <stop offset="0%" stopColor="oklch(0.92 0.04 70)" />
+              <stop offset="55%" stopColor="oklch(0.7 0.07 60)" />
+              <stop offset="100%" stopColor="oklch(0.35 0.06 50)" />
+            </radialGradient>
+            <radialGradient id="chapelBody" cx="30%" cy="35%" r="80%">
+              <stop offset="0%" stopColor="oklch(0.82 0.05 70)" />
+              <stop offset="60%" stopColor="oklch(0.55 0.07 60)" />
+              <stop offset="100%" stopColor="oklch(0.28 0.05 55)" />
+            </radialGradient>
+            <radialGradient id="chapelShadow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="oklch(0 0 0 / 0.55)" />
+              <stop offset="100%" stopColor="oklch(0 0 0 / 0)" />
+            </radialGradient>
             <linearGradient id="temploBg" x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stopColor="oklch(0.45 0.08 70 / 0.9)" />
               <stop offset="100%" stopColor="oklch(0.28 0.05 60 / 0.7)" />
@@ -486,58 +500,110 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
               const cx = box.width / 2;
               const cy = box.height / 2;
               const R = box.width / 2;
+              // Capilla circular en perspectiva 3D (cúpula + cuerpo cilíndrico + cruz)
+              const bodyW = R * 0.95;
+              const bodyH = R * 0.55;
+              const bodyCx = cx;
+              const bodyTopY = cy - bodyH * 0.15;
+              const domeRy = bodyW * 0.42;
+              const domeCy = bodyTopY;
               return (
                 <g key={s.id} transform={`translate(${box.x},${box.y})`}>
-                  <circle cx={cx} cy={cy} r={R} fill="oklch(0.3 0.05 145 / 0.4)" stroke="oklch(0.7 0.1 145 / 0.3)" />
-                  <circle cx={cx} cy={cy} r={R - 10} fill="none" stroke="oklch(0.55 0.02 240 / 0.8)" strokeWidth={18} />
-                  <circle cx={cx} cy={cy} r={R - 10} fill="none" stroke="oklch(0.85 0.04 240 / 0.5)" strokeWidth={0.6} strokeDasharray="4 5" />
-                  {[0, 90, 180, 270].map((deg) => {
-                    const rad = (deg * Math.PI) / 180;
-                    return (
-                      <line
-                        key={deg}
-                        x1={cx + Math.cos(rad) * (R - 30)}
-                        y1={cy + Math.sin(rad) * (R - 30)}
-                        x2={cx + Math.cos(rad) * R}
-                        y2={cy + Math.sin(rad) * R}
-                        stroke="oklch(0.6 0.02 240 / 0.75)"
-                        strokeWidth={10}
-                      />
-                    );
-                  })}
-                  <circle cx={cx} cy={cy} r={R - 45} fill="url(#rotondaBg)" stroke="oklch(1 0 0 / 0.18)" />
-                  <rect x={cx - 42} y={cy - 26} width={50} height={32} rx={3} fill="oklch(0.38 0.04 240 / 0.95)" stroke="oklch(1 0 0 / 0.25)" />
-                  <polygon points={`${cx - 44},${cy - 26} ${cx + 10},${cy - 26} ${cx - 17},${cy - 34}`} fill="oklch(0.28 0.05 60 / 0.95)" />
-                  <text x={cx - 17} y={cy - 12} textAnchor="middle" fill="oklch(0.85 0.02 240)" fontSize={4.5} fontWeight={600}>SALA DE</text>
-                  <text x={cx - 17} y={cy - 6} textAnchor="middle" fill="oklch(0.85 0.02 240)" fontSize={4.5} fontWeight={600}>MÁQUINAS</text>
-                  <circle cx={cx + 28} cy={cy + 22} r={20} fill="oklch(0.4 0.13 230 / 0.65)" stroke="oklch(0.75 0.18 230 / 0.6)" />
-                  <text x={cx + 28} y={cy + 24} textAnchor="middle" fill="oklch(0.95 0.05 230)" fontSize={5} fontWeight={600}>CISTERNA</text>
-                  {[30, 60, 120, 150, 210, 240, 300, 330].map((deg) => {
+                  {/* Jardín circundante */}
+                  <circle cx={cx} cy={cy} r={R} fill="oklch(0.3 0.06 145 / 0.45)" stroke="oklch(0.7 0.1 145 / 0.35)" />
+                  {[20, 70, 110, 160, 200, 250, 290, 340].map((deg) => {
                     const rad = (deg * Math.PI) / 180;
                     return (
                       <circle
                         key={deg}
-                        cx={cx + Math.cos(rad) * (R - 22)}
-                        cy={cy + Math.sin(rad) * (R - 22)}
-                        r={4.5}
-                        fill="oklch(0.5 0.12 145)"
+                        cx={cx + Math.cos(rad) * (R - 16)}
+                        cy={cy + Math.sin(rad) * (R - 16)}
+                        r={5}
+                        fill="oklch(0.5 0.14 145)"
                       />
                     );
                   })}
+                  {/* Anillo vehicular */}
+                  <circle cx={cx} cy={cy} r={R - 22} fill="none" stroke="oklch(0.5 0.02 240 / 0.75)" strokeWidth={14} />
+                  <circle cx={cx} cy={cy} r={R - 22} fill="none" stroke="oklch(0.9 0.04 240 / 0.45)" strokeWidth={0.5} strokeDasharray="5 6" />
+                  {/* Plataforma central */}
+                  <ellipse cx={cx} cy={cy + bodyH * 0.55} rx={bodyW * 0.62} ry={bodyW * 0.18} fill="oklch(0.42 0.03 240 / 0.85)" stroke="oklch(1 0 0 / 0.18)" />
+                  {/* Sombra proyectada de la capilla */}
+                  <ellipse cx={cx + 6} cy={cy + bodyH * 0.55 + 4} rx={bodyW * 0.5} ry={bodyW * 0.12} fill="url(#chapelShadow)" />
+                  {/* Cuerpo cilíndrico (perspectiva) */}
+                  <path
+                    d={`M ${bodyCx - bodyW / 2},${bodyTopY}
+                        L ${bodyCx - bodyW / 2},${bodyTopY + bodyH}
+                        A ${bodyW / 2},${bodyW * 0.18} 0 0 0 ${bodyCx + bodyW / 2},${bodyTopY + bodyH}
+                        L ${bodyCx + bodyW / 2},${bodyTopY}
+                        A ${bodyW / 2},${bodyW * 0.18} 0 0 1 ${bodyCx - bodyW / 2},${bodyTopY}
+                        Z`}
+                    fill="url(#chapelBody)"
+                    stroke="oklch(0.2 0.04 50 / 0.9)"
+                    strokeWidth={0.8}
+                  />
+                  {/* Ventanas arqueadas alrededor del cilindro */}
+                  {[-0.34, -0.12, 0.12, 0.34].map((fx, i) => {
+                    const wx = bodyCx + bodyW * fx;
+                    const wy = bodyTopY + bodyH * 0.35;
+                    return (
+                      <g key={i}>
+                        <path
+                          d={`M ${wx - 4},${wy + 12} L ${wx - 4},${wy} A 4,5 0 0 1 ${wx + 4},${wy} L ${wx + 4},${wy + 12} Z`}
+                          fill="oklch(0.78 0.13 230 / 0.85)"
+                          stroke="oklch(0.2 0.04 50 / 0.9)"
+                          strokeWidth={0.5}
+                        />
+                      </g>
+                    );
+                  })}
+                  {/* Puerta */}
+                  <path
+                    d={`M ${bodyCx - 7},${bodyTopY + bodyH - 2} L ${bodyCx - 7},${bodyTopY + bodyH - 22} A 7,9 0 0 1 ${bodyCx + 7},${bodyTopY + bodyH - 22} L ${bodyCx + 7},${bodyTopY + bodyH - 2} Z`}
+                    fill="oklch(0.22 0.05 50)"
+                    stroke="oklch(0.85 0.06 70 / 0.6)"
+                    strokeWidth={0.6}
+                  />
+                  {/* Cúpula (semielipse con highlight) */}
+                  <path
+                    d={`M ${bodyCx - bodyW / 2},${domeCy} A ${bodyW / 2},${domeRy} 0 0 1 ${bodyCx + bodyW / 2},${domeCy} Z`}
+                    fill="url(#chapelDome)"
+                    stroke="oklch(0.2 0.04 50 / 0.9)"
+                    strokeWidth={0.8}
+                  />
+                  {/* Brillo de cúpula */}
+                  <ellipse
+                    cx={bodyCx - bodyW * 0.12}
+                    cy={domeCy - domeRy * 0.45}
+                    rx={bodyW * 0.18}
+                    ry={domeRy * 0.22}
+                    fill="oklch(1 0 0 / 0.35)"
+                  />
+                  {/* Tambor entre cúpula y cuerpo */}
+                  <rect x={bodyCx - bodyW * 0.18} y={domeCy - 4} width={bodyW * 0.36} height={6} fill="oklch(0.55 0.05 60)" stroke="oklch(0.2 0.04 50 / 0.9)" strokeWidth={0.5} />
+                  {/* Linternín y cruz */}
+                  <rect x={bodyCx - 4} y={domeCy - domeRy - 14} width={8} height={14} fill="oklch(0.7 0.06 60)" stroke="oklch(0.2 0.04 50 / 0.9)" strokeWidth={0.5} />
+                  <ellipse cx={bodyCx} cy={domeCy - domeRy - 14} rx={6} ry={2.5} fill="oklch(0.85 0.06 70)" stroke="oklch(0.2 0.04 50 / 0.9)" strokeWidth={0.5} />
+                  <g transform={`translate(${bodyCx},${domeCy - domeRy - 26})`}>
+                    <rect x={-0.9} y={-10} width={1.8} height={14} fill="oklch(0.96 0.04 70)" />
+                    <rect x={-4} y={-5} width={8} height={1.8} fill="oklch(0.96 0.04 70)" />
+                  </g>
+                  {/* Etiqueta */}
                   <text
                     x={cx}
-                    y={20}
+                    y={22}
                     textAnchor="middle"
-                    fill="oklch(0.85 0.04 240)"
-                    fontSize={10}
+                    fill="oklch(0.9 0.04 240)"
+                    fontSize={11}
                     fontWeight={700}
                     style={{ letterSpacing: "0.28em" }}
                   >
-                    S12 · ROTONDA
+                    CAPILLA · ROTONDA
                   </text>
                 </g>
               );
             }
+
 
             const plots = PLOTS.filter((p) => p.sectorId === s.id);
             return (
