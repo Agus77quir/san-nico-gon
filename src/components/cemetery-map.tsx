@@ -380,7 +380,7 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = 1;
     canvas.width = Math.round(LAYOUT.totalW * dpr);
     canvas.height = Math.round(LAYOUT.totalH * dpr);
     canvas.style.width = `${LAYOUT.totalW}px`;
