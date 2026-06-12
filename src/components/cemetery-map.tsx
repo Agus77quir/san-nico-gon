@@ -328,6 +328,7 @@ function plotAtMapPoint(x: number, y: number): Plot | undefined {
 
 export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scaleRef = useRef(0.6);
   const txRef = useRef(0);
@@ -347,12 +348,12 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
   is3DRef.current = is3D;
 
   const applyTransform = useCallback((animate = false) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const viewport = viewportRef.current;
+    if (!viewport) return;
     const p = profileRef.current;
     const tilt = is3DRef.current ? `rotateX(${p.tilt}deg) rotateZ(${p.twist}deg)` : "";
-    canvas.style.transition = animate ? "transform 300ms ease" : "none";
-    canvas.style.transform = `translate3d(${txRef.current}px, ${tyRef.current}px, 0) scale(${scaleRef.current}) ${tilt}`;
+    viewport.style.transition = animate ? "transform 300ms ease" : "none";
+    viewport.style.transform = `translate3d(${txRef.current}px, ${tyRef.current}px, 0) scale(${scaleRef.current}) ${tilt}`;
   }, []);
 
   const scheduleApply = useCallback(() => {
@@ -547,21 +548,21 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
         onPointerLeave={() => setHover(null)}
         style={{ perspective: `${profile.perspective}px`, perspectiveOrigin: "50% 25%", boxShadow: is3D ? "inset 0 -60px 80px -40px rgba(0,0,0,.35)" : undefined }}
       >
-        <canvas ref={canvasRef} className="map-canvas" style={{ transformOrigin: "0 0", transformStyle: "preserve-3d", willChange: "transform", backfaceVisibility: "hidden" }} />
-        {selectedPlot && selectedBox && (
-          <div
-            className="pointer-events-none absolute border-2 border-foreground"
-            style={{
-              width: CELL,
-              height: CELL,
-              left: selectedBox.x + SECTOR_PADDING_X + selectedPlot.col * (CELL + GAP),
-              top: selectedBox.y + SECTOR_PADDING_TOP + selectedPlot.row * (CELL + GAP),
-              borderRadius: 3,
-              transformOrigin: "0 0",
-              transform: `translate3d(${txRef.current}px, ${tyRef.current}px, 0) scale(${scaleRef.current}) ${is3D ? `rotateX(${profile.tilt}deg) rotateZ(${profile.twist}deg)` : ""}`,
-            }}
-          />
-        )}
+        <div ref={viewportRef} className="absolute left-0 top-0" style={{ width: LAYOUT.totalW, height: LAYOUT.totalH, transformOrigin: "0 0", transformStyle: "preserve-3d", willChange: "transform", backfaceVisibility: "hidden" }}>
+          <canvas ref={canvasRef} className="map-canvas" />
+          {selectedPlot && selectedBox && (
+            <div
+              className="pointer-events-none absolute border-2 border-foreground"
+              style={{
+                width: CELL,
+                height: CELL,
+                left: selectedBox.x + SECTOR_PADDING_X + selectedPlot.col * (CELL + GAP),
+                top: selectedBox.y + SECTOR_PADDING_TOP + selectedPlot.row * (CELL + GAP),
+                borderRadius: 3,
+              }}
+            />
+          )}
+        </div>
       </div>
 
       {hover && (
