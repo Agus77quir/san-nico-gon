@@ -126,9 +126,9 @@ const BASE_STATS = (() => {
 })();
 
 function profileFor(width: number): DeviceProfile {
-  if (width < 640) return { device: "mobile", tilt: 26, twist: 0, perspective: 2200, maxScale: 2.4, minScale: 0.2, fitBoost: 1 };
-  if (width < 1024) return { device: "tablet", tilt: 32, twist: -1.5, perspective: 1900, maxScale: 2.6, minScale: 0.25, fitBoost: 1.05 };
-  return { device: "desktop", tilt: 38, twist: -2, perspective: 1600, maxScale: 3, minScale: 0.3, fitBoost: 1.1 };
+  if (width < 640) return { device: "mobile", tilt: 22, twist: 0, perspective: 2400, maxScale: 2.4, minScale: 0.03, fitBoost: 0.92 };
+  if (width < 1024) return { device: "tablet", tilt: 28, twist: -1.5, perspective: 2000, maxScale: 2.6, minScale: 0.04, fitBoost: 0.95 };
+  return { device: "desktop", tilt: 34, twist: -2, perspective: 1700, maxScale: 3, minScale: 0.05, fitBoost: 1 };
 }
 
 function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
