@@ -126,9 +126,9 @@ const BASE_STATS = (() => {
 })();
 
 function profileFor(width: number): DeviceProfile {
-  if (width < 640) return { device: "mobile", tilt: 26, twist: 0, perspective: 2200, maxScale: 2.4, minScale: 0.2, fitBoost: 1 };
-  if (width < 1024) return { device: "tablet", tilt: 32, twist: -1.5, perspective: 1900, maxScale: 2.6, minScale: 0.25, fitBoost: 1.05 };
-  return { device: "desktop", tilt: 38, twist: -2, perspective: 1600, maxScale: 3, minScale: 0.3, fitBoost: 1.1 };
+  if (width < 640) return { device: "mobile", tilt: 22, twist: 0, perspective: 2400, maxScale: 2.4, minScale: 0.03, fitBoost: 0.92 };
+  if (width < 1024) return { device: "tablet", tilt: 28, twist: -1.5, perspective: 2000, maxScale: 2.6, minScale: 0.04, fitBoost: 0.95 };
+  return { device: "desktop", tilt: 34, twist: -2, perspective: 1700, maxScale: 3, minScale: 0.05, fitBoost: 1 };
 }
 
 function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
@@ -340,7 +340,7 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
   const didDragRef = useRef(false);
   const is3DRef = useRef(true);
   const [is3D, setIs3D] = useState(true);
-  const [profile, setProfile] = useState<DeviceProfile>(() => profileFor(1280));
+  const [profile, setProfile] = useState<DeviceProfile>(() => profileFor(typeof window !== "undefined" ? window.innerWidth : 1280));
   const profileRef = useRef(profile);
   const [hover, setHover] = useState<{ plot: Plot; x: number; y: number } | null>(null);
   const notifications = useNotifications();
@@ -370,12 +370,19 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
     const el = containerRef.current;
     if (!el) return;
     const p = profileRef.current;
-    const fitW = ((el.clientWidth - 24) / LAYOUT.totalW) * p.fitBoost;
-    const fitH = (el.clientHeight - 24) / (LAYOUT.totalH * 0.7);
-    const nextScale = Math.max(p.minScale, Math.min(Math.max(fitW, fitH * 0.9), p.maxScale));
+    const pad = 24;
+    const tiltFactor = is3DRef.current ? Math.cos((p.tilt * Math.PI) / 180) : 1;
+    // Ajustar por ALTO (el mapa es muy ancho ~12000px). Permitir pan horizontal.
+    const fitH = (el.clientHeight - pad) / (LAYOUT.totalH * tiltFactor);
+    const fitW = (el.clientWidth - pad) / LAYOUT.totalW;
+    // Escala objetivo: mostrar verticalmente todo, pero no menos que un mínimo cómodo
+    let nextScale = fitH * p.fitBoost;
+    // Si el ancho cabe sobrado, agrandar para llenar
+    if (LAYOUT.totalW * nextScale < el.clientWidth) nextScale = Math.max(nextScale, fitW);
+    nextScale = Math.max(p.minScale, Math.min(nextScale, p.maxScale));
     scaleRef.current = nextScale;
     txRef.current = (el.clientWidth - LAYOUT.totalW * nextScale) / 2;
-    tyRef.current = (el.clientHeight - LAYOUT.totalH * nextScale) / 2;
+    tyRef.current = (el.clientHeight - LAYOUT.totalH * nextScale * tiltFactor) / 2;
     applyTransform(animate);
   }, [applyTransform]);
 
@@ -404,20 +411,38 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    let raf = 0;
     const update = () => {
-      const next = profileFor(el.clientWidth);
-      if (next.device !== profileRef.current.device) setProfile(next);
+      const w = el.clientWidth;
+      if (!w) return;
+      const next = profileFor(w);
+      profileRef.current = next;
+      if (next.device !== profile.device) setProfile(next);
       center(false);
     };
-    update();
-    const ro = new ResizeObserver(update);
+    // Múltiples intentos de centrado para asegurar que tome dimensiones finales
+    raf = requestAnimationFrame(update);
+    const timeouts = [50, 150, 400].map((ms) => window.setTimeout(update, ms));
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(update);
+    });
     ro.observe(el);
-    return () => ro.disconnect();
-  }, [center]);
+    return () => {
+      cancelAnimationFrame(raf);
+      timeouts.forEach(clearTimeout);
+      ro.disconnect();
+    };
+  }, [center, profile.device]);
 
   useEffect(() => {
-    applyTransform(true);
-  }, [is3D, profile, applyTransform]);
+    const t1 = requestAnimationFrame(() => center(true));
+    const t2 = window.setTimeout(() => center(false), 120);
+    return () => {
+      cancelAnimationFrame(t1);
+      clearTimeout(t2);
+    };
+  }, [is3D, profile, center]);
 
   useEffect(() => {
     if (!focusId) return;
