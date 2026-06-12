@@ -370,12 +370,15 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
     const el = containerRef.current;
     if (!el) return;
     const p = profileRef.current;
-    const fitW = ((el.clientWidth - 24) / LAYOUT.totalW) * p.fitBoost;
-    const fitH = (el.clientHeight - 24) / (LAYOUT.totalH * 0.7);
-    const nextScale = Math.max(p.minScale, Math.min(Math.max(fitW, fitH * 0.9), p.maxScale));
+    const pad = 24;
+    // Cuando hay tilt 3D, la altura proyectada se reduce ~cos(tilt)
+    const tiltFactor = is3DRef.current ? Math.cos((p.tilt * Math.PI) / 180) : 1;
+    const fitW = (el.clientWidth - pad) / LAYOUT.totalW;
+    const fitH = (el.clientHeight - pad) / (LAYOUT.totalH * tiltFactor);
+    const nextScale = Math.max(p.minScale, Math.min(Math.min(fitW, fitH) * p.fitBoost, p.maxScale));
     scaleRef.current = nextScale;
     txRef.current = (el.clientWidth - LAYOUT.totalW * nextScale) / 2;
-    tyRef.current = (el.clientHeight - LAYOUT.totalH * nextScale) / 2;
+    tyRef.current = (el.clientHeight - LAYOUT.totalH * nextScale * tiltFactor) / 2;
     applyTransform(animate);
   }, [applyTransform]);
 
