@@ -740,7 +740,6 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
             }
 
 
-            const plots = PLOTS_BY_SECTOR.get(s.id) ?? [];
             return (
               <g key={s.id} transform={`translate(${box.x},${box.y})`}>
                 <rect width={box.width} height={box.height} rx={10} fill="url(#sectorBg)" stroke="oklch(1 0 0 / 0.12)" />
@@ -762,45 +761,23 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
                     F{c + 1}
                   </text>
                 ))}
-                {/* Parcelas — sin handlers por celda (event delegation a nivel SVG) */}
-                <g style={{ cursor: "pointer" }}>
-                  {plots.map((p) => {
-                    const x = SECTOR_PADDING_X + p.col * (CELL + GAP);
-                    const y = SECTOR_PADDING_TOP + p.row * (CELL + GAP);
-                    return (
-                      <rect
-                        key={p.id}
-                        data-plot-id={p.id}
-                        x={x}
-                        y={y}
-                        width={CELL}
-                        height={CELL}
-                        rx={3}
-                        fill={statusColor(p.status)}
-                        opacity={0.92}
-                        stroke="oklch(1 0 0 / 0.12)"
-                        strokeWidth={1}
-                      />
-                    );
-                  })}
-                </g>
-                {/* Marcadores socio (sin eventos) */}
-                <g pointerEvents="none">
-                  {plots.map((p) =>
-                    p.type === "socio" ? (
-                      <circle
-                        key={`s-${p.id}`}
-                        cx={SECTOR_PADDING_X + p.col * (CELL + GAP) + CELL - 3}
-                        cy={SECTOR_PADDING_TOP + p.row * (CELL + GAP) + 3}
-                        r={2}
-                        fill="oklch(0.72 0.18 235)"
-                      />
-                    ) : null,
-                  )}
-                </g>
               </g>
             );
           })}
+          {/* Parcelas agrupadas por estado: 4 paths reemplazan ~13.000 rects. */}
+          <g style={{ cursor: "pointer" }}>
+            {PLOT_STATUSES.map((status) => (
+              <path
+                key={status}
+                d={PLOT_PATHS_BY_STATUS[status]}
+                fill={statusColor(status)}
+                opacity={0.92}
+                stroke="oklch(1 0 0 / 0.12)"
+                strokeWidth={1}
+              />
+            ))}
+          </g>
+          <path d={SOCIO_MARKERS_PATH} fill="oklch(0.72 0.18 235)" pointerEvents="none" />
           {/* Overlay de selección — separado del SVG estático para no re-renderizar todo */}
           {selectionOverlay}
         </svg>
