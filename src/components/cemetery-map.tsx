@@ -452,6 +452,9 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
           className="map-svg"
           width={LAYOUT.totalW}
           height={LAYOUT.totalH}
+          onClick={onSvgClick}
+          onPointerMove={onSvgPointerMove}
+          onPointerLeave={onSvgPointerLeave}
           style={{
             transformOrigin: "0 0",
             transformStyle: "preserve-3d",
