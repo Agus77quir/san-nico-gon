@@ -241,7 +241,7 @@ function buildPlot(sectorId: string, row: number, col: number, seed: number): Pl
       ? "occupied"
       : "partial";
 
-  const code = `S${sectorId}-F${row + 1}-${String(col + 1).padStart(2, "0")}`;
+  const code = `${sectorId}-F${row + 1}-${String(col + 1).padStart(2, "0")}`;
 
   return {
     id: `${sectorId}-${row}-${col}`,
