@@ -407,17 +407,28 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    let raf = 0;
     const update = () => {
-      const w = el.clientWidth || window.innerWidth;
+      const w = el.clientWidth;
+      if (!w) {
+        raf = requestAnimationFrame(update);
+        return;
+      }
       const next = profileFor(w);
       profileRef.current = next;
       if (next.device !== profile.device) setProfile(next);
       center(false);
     };
-    update();
-    const ro = new ResizeObserver(update);
+    raf = requestAnimationFrame(update);
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(update);
+    });
     ro.observe(el);
-    return () => ro.disconnect();
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
   }, [center, profile.device]);
 
   useEffect(() => {
