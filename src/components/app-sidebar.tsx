@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sidebar";
 import { BrandLogo } from "@/components/brand-logo";
 
-constmainItems = [
+const mainItems = [
   { title: "Dash", url: "/", icon: LayoutDashboard },
   { title: "Plano interactivo", url: "/plano", icon: Map },
   { title: "Parcelas", url: "/parcelas", icon: Grid3x3 },
