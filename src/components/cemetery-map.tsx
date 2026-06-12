@@ -56,6 +56,8 @@ interface PlotSprite {
   y: number;
 }
 
+type MapPalette = Record<Plot["status"], string> & { socio: string };
+
 function boxFor(s: Sector): SectorBox {
   if (s.shape === "landmark") return { sector: s, x: s.x, y: s.y, width: TEMPLO_W, height: TEMPLO_H };
   if (s.shape === "rotonda") return { sector: s, x: s.x, y: s.y, width: ROTONDA_SIZE, height: ROTONDA_SIZE };
@@ -254,7 +256,7 @@ function drawRotonda(ctx: CanvasRenderingContext2D, box: SectorBox) {
   ctx.restore();
 }
 
-function drawBaseMap(ctx: CanvasRenderingContext2D) {
+function drawBaseMap(ctx: CanvasRenderingContext2D, palette: MapPalette) {
   ctx.clearRect(0, 0, LAYOUT.totalW, LAYOUT.totalH);
 
   ctx.fillStyle = "rgba(68,78,90,.68)";
@@ -294,7 +296,7 @@ function drawBaseMap(ctx: CanvasRenderingContext2D) {
   ctx.lineWidth = 1;
   ctx.strokeStyle = "rgba(255,255,255,.12)";
   for (const status of STATUS_ORDER) {
-    ctx.fillStyle = statusColor(status);
+    ctx.fillStyle = palette[status];
     for (const item of PLOT_SPRITES.byStatus[status]) {
       roundedRect(ctx, item.x, item.y, CELL, CELL, 3);
       ctx.fill();
@@ -302,7 +304,7 @@ function drawBaseMap(ctx: CanvasRenderingContext2D) {
     }
   }
 
-  ctx.fillStyle = "oklch(0.72 0.18 235)";
+  ctx.fillStyle = palette.socio;
   for (const item of PLOT_SPRITES.socios) {
     ctx.beginPath();
     ctx.arc(item.x + CELL - 3, item.y + 3, 2, 0, Math.PI * 2);
