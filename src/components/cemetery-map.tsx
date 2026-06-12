@@ -67,18 +67,6 @@ function sectorBoxById(id: string): SectorBox | undefined {
 }
 
 // Índices estáticos — se calculan una sola vez al cargar el módulo.
-const PLOTS_BY_SECTOR: Map<string, Plot[]> = (() => {
-  const m = new Map<string, Plot[]>();
-  for (const p of PLOTS) {
-    let arr = m.get(p.sectorId);
-    if (!arr) {
-      arr = [];
-      m.set(p.sectorId, arr);
-    }
-    arr.push(p);
-  }
-  return m;
-})();
 const PLOT_BY_ID: Map<string, Plot> = new Map(PLOTS.map((p) => [p.id, p]));
 const PLOT_STATUSES: PlotStatus[] = ["available", "partial", "occupied", "reserved"];
 
