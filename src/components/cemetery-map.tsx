@@ -239,16 +239,22 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
     [scheduleApply],
   );
 
+  const didDragRef = useRef(false);
+
   const onPointerDown = useCallback((e: PointerEvent) => {
     (e.target as Element).setPointerCapture?.(e.pointerId);
     dragRef.current = { x: e.clientX, y: e.clientY, tx: txRef.current, ty: tyRef.current };
+    didDragRef.current = false;
   }, []);
 
   const onPointerMove = useCallback(
     (e: PointerEvent) => {
       if (!dragRef.current) return;
-      txRef.current = dragRef.current.tx + e.clientX - dragRef.current.x;
-      tyRef.current = dragRef.current.ty + e.clientY - dragRef.current.y;
+      const dx = e.clientX - dragRef.current.x;
+      const dy = e.clientY - dragRef.current.y;
+      if (!didDragRef.current && dx * dx + dy * dy > 16) didDragRef.current = true;
+      txRef.current = dragRef.current.tx + dx;
+      tyRef.current = dragRef.current.ty + dy;
       scheduleApply();
     },
     [scheduleApply],
@@ -257,6 +263,61 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
   const onPointerUp = useCallback(() => {
     dragRef.current = null;
   }, []);
+
+  // Selección renderizada como overlay para no re-renderizar las ~13k parcelas.
+  const selectionOverlay = useMemo(() => {
+    if (!selectedId) return null;
+    const p = PLOT_BY_ID.get(selectedId);
+    if (!p) return null;
+    const box = sectorBoxById(p.sectorId);
+    if (!box) return null;
+    const x = box.x + SECTOR_PADDING_X + p.col * (CELL + GAP);
+    const y = box.y + SECTOR_PADDING_TOP + p.row * (CELL + GAP);
+    return (
+      <rect
+        x={x}
+        y={y}
+        width={CELL}
+        height={CELL}
+        rx={3}
+        fill="none"
+        stroke="white"
+        strokeWidth={2.4}
+        pointerEvents="none"
+      />
+    );
+  }, [selectedId]);
+
+  // Delegación de eventos a nivel SVG (un solo listener para todas las parcelas).
+  const onSvgClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (didDragRef.current) return;
+      const id = (e.target as Element).getAttribute?.("data-plot-id");
+      if (!id) return;
+      const plot = PLOT_BY_ID.get(id);
+      if (plot) onSelect(plot);
+    },
+    [onSelect],
+  );
+
+  const onSvgPointerMove = useCallback((e: React.PointerEvent) => {
+    const el = containerRef.current;
+    if (!el) return;
+    const id = (e.target as Element).getAttribute?.("data-plot-id");
+    if (!id) {
+      setHover((h) => (h ? null : h));
+      return;
+    }
+    setHover((h) => {
+      if (h && h.plot.id === id) return h; // mismo plot → no re-render
+      const plot = PLOT_BY_ID.get(id);
+      if (!plot) return h;
+      const rect = el.getBoundingClientRect();
+      return { plot, x: e.clientX - rect.left, y: e.clientY - rect.top };
+    });
+  }, []);
+
+  const onSvgPointerLeave = useCallback(() => setHover(null), []);
 
   const zoomBy = useCallback(
     (factor: number) => {
