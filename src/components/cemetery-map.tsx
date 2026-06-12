@@ -12,7 +12,7 @@ import {
 import { Minus, Plus, Locate, Box, Square, Activity } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { PLOTS, SECTORS, statusColor, statusLabel, type Plot, type Sector } from "@/lib/demo-data";
+import { PLOTS, SECTORS, statusColor, statusLabel, type Plot, type PlotStatus, type Sector } from "@/lib/demo-data";
 import { useNotifications } from "@/lib/notifications-store";
 
 interface Props {
@@ -59,8 +59,11 @@ const LAYOUT = (() => {
   return { boxes, totalW, totalH };
 })();
 
+const SECTOR_BOX_BY_ID = new Map(LAYOUT.boxes.map((box) => [box.sector.id, box]));
+const GRID_BOXES = LAYOUT.boxes.filter((box) => box.sector.shape !== "landmark" && box.sector.shape !== "rotonda");
+
 function sectorBoxById(id: string): SectorBox | undefined {
-  return LAYOUT.boxes.find((b) => b.sector.id === id);
+  return SECTOR_BOX_BY_ID.get(id);
 }
 
 // Índices estáticos — se calculan una sola vez al cargar el módulo.
@@ -77,6 +80,80 @@ const PLOTS_BY_SECTOR: Map<string, Plot[]> = (() => {
   return m;
 })();
 const PLOT_BY_ID: Map<string, Plot> = new Map(PLOTS.map((p) => [p.id, p]));
+const PLOT_STATUSES: PlotStatus[] = ["available", "partial", "occupied", "reserved"];
+
+const BASE_STATS = (() => {
+  let occupied = 0;
+  let partial = 0;
+  let available = 0;
+  let spotsOcc = 0;
+  for (const p of PLOTS) {
+    if (p.status === "occupied") occupied++;
+    if (p.status === "partial") partial++;
+    if (p.status === "available") available++;
+    for (const spot of p.spots) if (spot.occupant) spotsOcc++;
+  }
+  return {
+    total: PLOTS.length,
+    occupied,
+    partial,
+    available,
+    occPct: Math.round((spotsOcc / (PLOTS.length * 3)) * 100),
+  };
+})();
+
+function rectPath(x: number, y: number, w: number, h: number): string {
+  return `M${x},${y}h${w}v${h}h-${w}Z`;
+}
+
+const PLOT_PATHS_BY_STATUS: Record<PlotStatus, string> = (() => {
+  const parts: Record<PlotStatus, string[]> = { available: [], partial: [], occupied: [], reserved: [] };
+  for (const p of PLOTS) {
+    const box = sectorBoxById(p.sectorId);
+    if (!box) continue;
+    const x = box.x + SECTOR_PADDING_X + p.col * (CELL + GAP);
+    const y = box.y + SECTOR_PADDING_TOP + p.row * (CELL + GAP);
+    parts[p.status].push(rectPath(x, y, CELL, CELL));
+  }
+  return {
+    available: parts.available.join(""),
+    partial: parts.partial.join(""),
+    occupied: parts.occupied.join(""),
+    reserved: parts.reserved.join(""),
+  };
+})();
+
+const SOCIO_MARKERS_PATH = PLOTS.filter((p) => p.type === "socio")
+  .map((p) => {
+    const box = sectorBoxById(p.sectorId);
+    if (!box) return "";
+    const x = box.x + SECTOR_PADDING_X + p.col * (CELL + GAP) + CELL - 5;
+    const y = box.y + SECTOR_PADDING_TOP + p.row * (CELL + GAP) + 1;
+    return rectPath(x, y, 4, 4);
+  })
+  .join("");
+
+function plotAtSvgPoint(svgX: number, svgY: number): Plot | undefined {
+  for (const box of GRID_BOXES) {
+    if (svgX < box.x || svgY < box.y || svgX > box.x + box.width || svgY > box.y + box.height) continue;
+    const localX = svgX - box.x - SECTOR_PADDING_X;
+    const localY = svgY - box.y - SECTOR_PADDING_TOP;
+    if (localX < 0 || localY < 0) return undefined;
+    const step = CELL + GAP;
+    const col = Math.floor(localX / step);
+    const row = Math.floor(localY / step);
+    if (col < 0 || row < 0 || col >= box.sector.cols || row >= box.sector.rows) return undefined;
+    if (localX - col * step > CELL || localY - row * step > CELL) return undefined;
+    return PLOT_BY_ID.get(`${box.sector.id}-${row}-${col}`);
+  }
+  return undefined;
+}
+
+function eventToSvgPoint(svg: SVGSVGElement, e: { clientX: number; clientY: number }): DOMPoint | null {
+  const ctm = svg.getScreenCTM();
+  if (!ctm) return null;
+  return new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse());
+}
 
 type Device = "mobile" | "tablet" | "desktop";
 
