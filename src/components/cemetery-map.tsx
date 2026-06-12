@@ -391,11 +391,11 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
     if (!ctx) return;
     const styles = getComputedStyle(document.documentElement);
     const palette: MapPalette = {
-      available: styles.getPropertyValue("--success").trim(),
-      partial: styles.getPropertyValue("--warning").trim(),
-      occupied: styles.getPropertyValue("--destructive").trim(),
-      reserved: styles.getPropertyValue("--muted-foreground").trim(),
-      socio: styles.getPropertyValue("--primary-glow").trim(),
+      available: styles.getPropertyValue("--map-available").trim() || "rgb(34, 197, 94)",
+      partial: styles.getPropertyValue("--map-partial").trim() || "rgb(245, 158, 11)",
+      occupied: styles.getPropertyValue("--map-occupied").trim() || "rgb(244, 63, 94)",
+      reserved: styles.getPropertyValue("--map-reserved").trim() || "rgb(148, 163, 184)",
+      socio: styles.getPropertyValue("--map-socio").trim() || "rgb(14, 165, 233)",
     };
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     drawBaseMap(ctx, palette);
