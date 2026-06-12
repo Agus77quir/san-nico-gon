@@ -414,16 +414,15 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
     let raf = 0;
     const update = () => {
       const w = el.clientWidth;
-      if (!w) {
-        raf = requestAnimationFrame(update);
-        return;
-      }
+      if (!w) return;
       const next = profileFor(w);
       profileRef.current = next;
       if (next.device !== profile.device) setProfile(next);
       center(false);
     };
+    // Múltiples intentos de centrado para asegurar que tome dimensiones finales
     raf = requestAnimationFrame(update);
+    const timeouts = [50, 150, 400].map((ms) => window.setTimeout(update, ms));
     const ro = new ResizeObserver(() => {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(update);
@@ -431,6 +430,7 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
     ro.observe(el);
     return () => {
       cancelAnimationFrame(raf);
+      timeouts.forEach(clearTimeout);
       ro.disconnect();
     };
   }, [center, profile.device]);
