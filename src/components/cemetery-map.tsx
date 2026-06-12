@@ -622,7 +622,7 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
             }
 
 
-            const plots = PLOTS.filter((p) => p.sectorId === s.id);
+            const plots = PLOTS_BY_SECTOR.get(s.id) ?? [];
             return (
               <g key={s.id} transform={`translate(${box.x},${box.y})`}>
                 <rect width={box.width} height={box.height} rx={10} fill="url(#sectorBg)" stroke="oklch(1 0 0 / 0.12)" />
@@ -644,59 +644,47 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
                     F{c + 1}
                   </text>
                 ))}
-                {plots.map((p) => {
-                  const x = SECTOR_PADDING_X + p.col * (CELL + GAP);
-                  const y = SECTOR_PADDING_TOP + p.row * (CELL + GAP);
-                  const isSelected = selectedId === p.id;
-                  return (
-                    <g
-                      key={p.id}
-                      transform={`translate(${x},${y})`}
-                      style={{ cursor: "pointer" }}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelect(p);
-                      }}
-                      onPointerEnter={(e) => {
-                        const rect = containerRef.current?.getBoundingClientRect();
-                        if (!rect) return;
-                        setHover({ plot: p, x: e.clientX - rect.left, y: e.clientY - rect.top });
-                      }}
-                      onPointerLeave={() => setHover((h) => (h?.plot.id === p.id ? null : h))}
-                    >
+                {/* Parcelas — sin handlers por celda (event delegation a nivel SVG) */}
+                <g style={{ cursor: "pointer" }}>
+                  {plots.map((p) => {
+                    const x = SECTOR_PADDING_X + p.col * (CELL + GAP);
+                    const y = SECTOR_PADDING_TOP + p.row * (CELL + GAP);
+                    return (
                       <rect
+                        key={p.id}
+                        data-plot-id={p.id}
+                        x={x}
+                        y={y}
                         width={CELL}
                         height={CELL}
                         rx={3}
                         fill={statusColor(p.status)}
-                        opacity={isSelected ? 1 : 0.92}
-                        stroke={isSelected ? "white" : "oklch(1 0 0 / 0.12)"}
-                        strokeWidth={isSelected ? 2 : 1}
-                      >
-                        <title>{`${p.code} — ${statusLabel(p.status)}`}</title>
-                      </rect>
-                      {p.status === "partial" && (
-                        <rect
-                          className="plot-pulse"
-                          width={CELL}
-                          height={CELL}
-                          rx={3}
-                          fill="none"
-                          stroke="white"
-                          strokeWidth={0.8}
-                          pointerEvents="none"
-                        />
-                      )}
-                      {p.type === "socio" && (
-                        <circle cx={CELL - 3} cy={3} r={2} fill="oklch(0.72 0.18 235)" />
-                      )}
-                    </g>
-                  );
-                })}
+                        opacity={0.92}
+                        stroke="oklch(1 0 0 / 0.12)"
+                        strokeWidth={1}
+                      />
+                    );
+                  })}
+                </g>
+                {/* Marcadores socio (sin eventos) */}
+                <g pointerEvents="none">
+                  {plots.map((p) =>
+                    p.type === "socio" ? (
+                      <circle
+                        key={`s-${p.id}`}
+                        cx={SECTOR_PADDING_X + p.col * (CELL + GAP) + CELL - 3}
+                        cy={SECTOR_PADDING_TOP + p.row * (CELL + GAP) + 3}
+                        r={2}
+                        fill="oklch(0.72 0.18 235)"
+                      />
+                    ) : null,
+                  )}
+                </g>
               </g>
             );
           })}
+          {/* Overlay de selección — separado del SVG estático para no re-renderizar todo */}
+          {selectionOverlay}
         </svg>
       </div>
 
