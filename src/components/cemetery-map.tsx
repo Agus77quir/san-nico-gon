@@ -1,4 +1,5 @@
 import {
+  memo,
   useCallback,
   useEffect,
   useMemo,
@@ -6,6 +7,7 @@ import {
   useState,
   type WheelEvent,
   type PointerEvent,
+  type ReactNode,
 } from "react";
 import { Minus, Plus, Locate, Box, Square, Activity } from "lucide-react";
 
