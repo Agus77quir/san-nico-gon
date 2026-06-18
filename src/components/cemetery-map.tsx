@@ -462,9 +462,15 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
     const box = SECTOR_BOX_BY_ID.get(plot.sectorId);
     const el = containerRef.current;
     if (!box || !el) return;
+    // Forzar vista plana al enfocar: garantiza centrado píxel-perfect
+    if (is3DRef.current) {
+      is3DRef.current = false;
+      setIs3D(false);
+    }
     const px = box.x + SECTOR_PADDING_X + plot.col * (CELL + GAP) + CELL / 2;
     const py = box.y + SECTOR_PADDING_TOP + plot.row * (CELL + GAP) + CELL / 2;
-    const nextScale = Math.min(profileRef.current.maxScale, 1.6);
+    const p = profileRef.current;
+    const nextScale = Math.min(p.maxScale, Math.max(1.4, p.maxScale * 0.7));
     scaleRef.current = nextScale;
     txRef.current = el.clientWidth / 2 - px * nextScale;
     tyRef.current = el.clientHeight / 2 - py * nextScale;
