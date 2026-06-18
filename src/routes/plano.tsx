@@ -70,7 +70,7 @@ function PlanoPage() {
               setShowResults(true);
             }}
             onFocus={() => setShowResults(true)}
-            placeholder="Buscar por código, fallecido, DNI o titular…"
+            placeholder="Buscar por código, sector, fallecido, DNI o titular…"
             className="h-9 pl-9"
           />
           {showResults && results.length > 0 && (
