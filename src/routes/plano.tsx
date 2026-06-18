@@ -36,6 +36,7 @@ function PlanoPage() {
     if (!q) return [];
     return PLOTS.filter((p) => {
       if (p.code.toLowerCase().includes(q)) return true;
+      if (p.sectorId.toLowerCase().includes(q)) return true;
       if (p.holder?.fullName.toLowerCase().includes(q)) return true;
       if (p.holder?.dni.includes(q)) return true;
       if (p.type.includes(q)) return true;
@@ -69,7 +70,7 @@ function PlanoPage() {
               setShowResults(true);
             }}
             onFocus={() => setShowResults(true)}
-            placeholder="Buscar por código, fallecido, DNI o titular…"
+            placeholder="Buscar por código, sector, fallecido, DNI o titular…"
             className="h-9 pl-9"
           />
           {showResults && results.length > 0 && (
