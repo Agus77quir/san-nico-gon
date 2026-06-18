@@ -462,13 +462,30 @@ export function CemeteryMap({ selectedId, onSelect, focusId }: Props) {
     const box = SECTOR_BOX_BY_ID.get(plot.sectorId);
     const el = containerRef.current;
     if (!box || !el) return;
+    const was3D = is3DRef.current;
+    // Vista plana para centrado píxel-perfect
+    if (was3D) {
+      is3DRef.current = false;
+      setIs3D(false);
+    }
     const px = box.x + SECTOR_PADDING_X + plot.col * (CELL + GAP) + CELL / 2;
     const py = box.y + SECTOR_PADDING_TOP + plot.row * (CELL + GAP) + CELL / 2;
-    const nextScale = Math.min(profileRef.current.maxScale, 1.6);
-    scaleRef.current = nextScale;
-    txRef.current = el.clientWidth / 2 - px * nextScale;
-    tyRef.current = el.clientHeight / 2 - py * nextScale;
-    applyTransform(true);
+    const focus = () => {
+      const cont = containerRef.current;
+      if (!cont) return;
+      const p = profileRef.current;
+      const nextScale = Math.min(p.maxScale, Math.max(1.6, p.maxScale * 0.75));
+      scaleRef.current = nextScale;
+      txRef.current = cont.clientWidth / 2 - px * nextScale;
+      tyRef.current = cont.clientHeight / 2 - py * nextScale;
+      applyTransform(true);
+    };
+    // Aplicar después del autocenter disparado por el toggle 3D→2D
+    if (was3D) {
+      const t = window.setTimeout(focus, 180);
+      return () => clearTimeout(t);
+    }
+    focus();
   }, [focusId, applyTransform]);
 
   const clientToMapPoint = useCallback((clientX: number, clientY: number) => {
