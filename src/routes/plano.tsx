@@ -36,6 +36,7 @@ function PlanoPage() {
     if (!q) return [];
     return PLOTS.filter((p) => {
       if (p.code.toLowerCase().includes(q)) return true;
+      if (p.sectorId.toLowerCase().includes(q)) return true;
       if (p.holder?.fullName.toLowerCase().includes(q)) return true;
       if (p.holder?.dni.includes(q)) return true;
       if (p.type.includes(q)) return true;
