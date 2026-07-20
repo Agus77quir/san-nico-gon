@@ -10,7 +10,17 @@ import {
   Save,
   X,
   ArrowLeft,
+  FileText,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { AGENCIAS, downloadPlanillaBlancoPDF } from "@/lib/planilla-blanco-pdf";
 
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
