@@ -10,7 +10,17 @@ import {
   Save,
   X,
   ArrowLeft,
+  FileText,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { AGENCIAS, downloadPlanillaBlancoPDF } from "@/lib/planilla-blanco-pdf";
 
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -62,6 +72,8 @@ export const Route = createFileRoute("/servicios")({
 function ServiciosPage() {
   const [list, setList] = useState<Solicitud[]>([]);
   const [editing, setEditing] = useState<Solicitud | null>(null);
+  const [planillaOpen, setPlanillaOpen] = useState(false);
+  const [agencia, setAgencia] = useState<string>(AGENCIAS[0]);
 
   // filters
   const [qFactura, setQFactura] = useState("");
@@ -120,12 +132,20 @@ function ServiciosPage() {
       title="Solicitudes de Servicio"
       subtitle={`${filtered.length} de ${list.length} registros`}
       actions={
-        <Button
-          onClick={() => setEditing(emptySolicitud())}
-          className="bg-gradient-brand text-primary-foreground hover:opacity-90"
-        >
-          <Plus className="mr-2 h-4 w-4" /> Nueva solicitud
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setPlanillaOpen(true)}
+          >
+            <FileText className="mr-2 h-4 w-4" /> Planilla en blanco
+          </Button>
+          <Button
+            onClick={() => setEditing(emptySolicitud())}
+            className="bg-gradient-brand text-primary-foreground hover:opacity-90"
+          >
+            <Plus className="mr-2 h-4 w-4" /> Nueva solicitud
+          </Button>
+        </div>
       }
     >
       <div className="space-y-4">
@@ -216,6 +236,43 @@ function ServiciosPage() {
           </Table>
         </div>
       </div>
+
+      <Dialog open={planillaOpen} onOpenChange={setPlanillaOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Planilla en blanco (PDF)</DialogTitle>
+            <DialogDescription>
+              Elegí la agencia. Se descarga un PDF listo para imprimir y completar a mano.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Agencia</Label>
+            <Select value={agencia} onValueChange={setAgencia}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {AGENCIAS.map((a) => (
+                  <SelectItem key={a} value={a}>{a}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPlanillaOpen(false)}>
+              <X className="mr-1 h-4 w-4" /> Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                downloadPlanillaBlancoPDF(agencia);
+                setPlanillaOpen(false);
+                toast.success("Planilla generada");
+              }}
+              className="bg-gradient-brand text-primary-foreground hover:opacity-90"
+            >
+              <FileDown className="mr-1 h-4 w-4" /> Descargar PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
