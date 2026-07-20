@@ -54,9 +54,16 @@ export function downloadPlanillaBlancoPDF(agencia: string) {
   y += 50;
 
   // helpers
+  const GAP = 6;
   const section = (title: string) => {
-    doc.setFillColor(230, 235, 245);
-    doc.rect(M, y, W - M * 2, 16, "F");
+    if (y + 40 > H - M) {
+      doc.addPage();
+      y = M;
+    }
+    y += GAP;
+    doc.setFillColor(235, 240, 250);
+    doc.setDrawColor(200, 210, 225);
+    doc.rect(M, y, W - M * 2, 16, "FD");
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(20, 40, 90);
@@ -65,17 +72,18 @@ export function downloadPlanillaBlancoPDF(agencia: string) {
     y += 20;
   };
 
-  const field = (label: string, x: number, w: number, h = 22) => {
-    doc.setDrawColor(160);
+  const field = (label: string, x: number, w: number, h = 24) => {
+    doc.setDrawColor(170);
+    doc.setLineWidth(0.5);
     doc.rect(x, y, w, h);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7);
     doc.setTextColor(90);
-    doc.text(label.toUpperCase(), x + 4, y + 7);
+    doc.text(label.toUpperCase(), x + 4, y + 8);
     doc.setTextColor(0);
   };
 
-  const rowFields = (fields: { label: string; w: number }[], h = 22) => {
+  const rowFields = (fields: { label: string; w: number }[], h = 24) => {
     if (y + h > H - M) {
       doc.addPage();
       y = M;
@@ -88,7 +96,7 @@ export function downloadPlanillaBlancoPDF(agencia: string) {
       field(f.label, x, w, h);
       x += w;
     });
-    y += h;
+    y += h + 2;
   };
 
   const checkboxes = (label: string, opts: string[]) => {
@@ -96,17 +104,23 @@ export function downloadPlanillaBlancoPDF(agencia: string) {
       doc.addPage();
       y = M;
     }
+    doc.setDrawColor(170);
+    doc.setLineWidth(0.5);
+    doc.rect(M, y, W - M * 2, 20);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
-    doc.text(label + ":", M, y + 10);
-    let x = M + doc.getTextWidth(label + ":") + 8;
+    doc.setTextColor(60);
+    doc.text(label.toUpperCase() + ":", M + 6, y + 13);
+    let x = M + 8 + doc.getTextWidth(label + ":") + 10;
     doc.setFont("helvetica", "normal");
+    doc.setTextColor(0);
+    doc.setFontSize(9);
     opts.forEach((opt) => {
-      doc.rect(x, y + 3, 9, 9);
-      doc.text(opt, x + 13, y + 10);
-      x += 13 + doc.getTextWidth(opt) + 14;
+      doc.rect(x, y + 6, 9, 9);
+      doc.text(opt, x + 13, y + 13);
+      x += 13 + doc.getTextWidth(opt) + 16;
     });
-    y += 20;
+    y += 24;
   };
 
   // Solicitante
