@@ -253,13 +253,12 @@ export function downloadPlanillaBlancoPDF() {
   doc.setFontSize(7);
   doc.setTextColor(120);
   doc.text(
-    `Planilla generada en blanco para completar manualmente — Agencia: ${agencia} — ${new Date().toLocaleDateString()}`,
+    `Planilla en blanco para completar manualmente — ${new Date().toLocaleDateString()}`,
     M,
     H - 20,
   );
 
-  const slug = agencia.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "planilla";
-  doc.save(`planilla-${slug}.pdf`);
+  doc.save(`planilla-solicitud-servicio.pdf`);
 }
 
 function line(doc: jsPDF, x1: number, y1: number, x2: number) {
