@@ -1,17 +1,6 @@
 import { jsPDF } from "jspdf";
 
-export const AGENCIAS = [
-  "Casa Central - La Rioja",
-  "Sucursal Chilecito",
-  "Sucursal Chamical",
-  "Sucursal Chepes",
-  "Sucursal Aimogasta",
-  "Sucursal Villa Unión",
-] as const;
-
-export type Agencia = (typeof AGENCIAS)[number];
-
-export function downloadPlanillaBlancoPDF(agencia: string) {
+export function downloadPlanillaBlancoPDF() {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
@@ -40,7 +29,7 @@ export function downloadPlanillaBlancoPDF(agencia: string) {
   doc.text("AGENCIA:", M + 8, y + 14);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
-  doc.text(agencia || "________________________________________", M + 70, y + 14);
+  line(doc, M + 70, y + 15, W - M - 8);
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
@@ -264,13 +253,12 @@ export function downloadPlanillaBlancoPDF(agencia: string) {
   doc.setFontSize(7);
   doc.setTextColor(120);
   doc.text(
-    `Planilla generada en blanco para completar manualmente — Agencia: ${agencia} — ${new Date().toLocaleDateString()}`,
+    `Planilla en blanco para completar manualmente — ${new Date().toLocaleDateString()}`,
     M,
     H - 20,
   );
 
-  const slug = agencia.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "planilla";
-  doc.save(`planilla-${slug}.pdf`);
+  doc.save(`planilla-solicitud-servicio.pdf`);
 }
 
 function line(doc: jsPDF, x1: number, y1: number, x2: number) {
