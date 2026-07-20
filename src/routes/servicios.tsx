@@ -74,6 +74,8 @@ function ServiciosPage() {
   const [editing, setEditing] = useState<Solicitud | null>(null);
   const [planillaOpen, setPlanillaOpen] = useState(false);
   const [agencia, setAgencia] = useState<string>(AGENCIAS[0]);
+  const [agenciaManual, setAgenciaManual] = useState("");
+  const agenciaFinal = agencia === "__manual__" ? agenciaManual.trim() : agencia;
 
   // filters
   const [qFactura, setQFactura] = useState("");
