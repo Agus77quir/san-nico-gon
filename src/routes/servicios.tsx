@@ -236,6 +236,43 @@ function ServiciosPage() {
           </Table>
         </div>
       </div>
+
+      <Dialog open={planillaOpen} onOpenChange={setPlanillaOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Planilla en blanco (PDF)</DialogTitle>
+            <DialogDescription>
+              Elegí la agencia. Se descarga un PDF listo para imprimir y completar a mano.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Agencia</Label>
+            <Select value={agencia} onValueChange={setAgencia}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {AGENCIAS.map((a) => (
+                  <SelectItem key={a} value={a}>{a}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPlanillaOpen(false)}>
+              <X className="mr-1 h-4 w-4" /> Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                downloadPlanillaBlancoPDF(agencia);
+                setPlanillaOpen(false);
+                toast.success("Planilla generada");
+              }}
+              className="bg-gradient-brand text-primary-foreground hover:opacity-90"
+            >
+              <FileDown className="mr-1 h-4 w-4" /> Descargar PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
