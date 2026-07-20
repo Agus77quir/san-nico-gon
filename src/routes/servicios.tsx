@@ -133,7 +133,7 @@ function ServiciosPage() {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={() => setPlanillaOpen(true)}
+            onClick={() => { downloadPlanillaBlancoPDF(); toast.success("Planilla descargada"); }}
           >
             <FileText className="mr-2 h-4 w-4" /> Planilla en blanco
           </Button>
