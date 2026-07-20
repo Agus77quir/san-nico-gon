@@ -72,6 +72,8 @@ export const Route = createFileRoute("/servicios")({
 function ServiciosPage() {
   const [list, setList] = useState<Solicitud[]>([]);
   const [editing, setEditing] = useState<Solicitud | null>(null);
+  const [planillaOpen, setPlanillaOpen] = useState(false);
+  const [agencia, setAgencia] = useState<string>(AGENCIAS[0]);
 
   // filters
   const [qFactura, setQFactura] = useState("");
