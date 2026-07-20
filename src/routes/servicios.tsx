@@ -132,12 +132,20 @@ function ServiciosPage() {
       title="Solicitudes de Servicio"
       subtitle={`${filtered.length} de ${list.length} registros`}
       actions={
-        <Button
-          onClick={() => setEditing(emptySolicitud())}
-          className="bg-gradient-brand text-primary-foreground hover:opacity-90"
-        >
-          <Plus className="mr-2 h-4 w-4" /> Nueva solicitud
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setPlanillaOpen(true)}
+          >
+            <FileText className="mr-2 h-4 w-4" /> Planilla en blanco
+          </Button>
+          <Button
+            onClick={() => setEditing(emptySolicitud())}
+            className="bg-gradient-brand text-primary-foreground hover:opacity-90"
+          >
+            <Plus className="mr-2 h-4 w-4" /> Nueva solicitud
+          </Button>
+        </div>
       }
     >
       <div className="space-y-4">
