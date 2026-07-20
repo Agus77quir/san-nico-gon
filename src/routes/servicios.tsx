@@ -74,6 +74,8 @@ function ServiciosPage() {
   const [editing, setEditing] = useState<Solicitud | null>(null);
   const [planillaOpen, setPlanillaOpen] = useState(false);
   const [agencia, setAgencia] = useState<string>(AGENCIAS[0]);
+  const [agenciaManual, setAgenciaManual] = useState("");
+  const agenciaFinal = agencia === "__manual__" ? agenciaManual.trim() : agencia;
 
   // filters
   const [qFactura, setQFactura] = useState("");
@@ -245,24 +247,39 @@ function ServiciosPage() {
               Elegí la agencia. Se descarga un PDF listo para imprimir y completar a mano.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2">
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Agencia</Label>
-            <Select value={agencia} onValueChange={setAgencia}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {AGENCIAS.map((a) => (
-                  <SelectItem key={a} value={a}>{a}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Agencia predefinida</Label>
+              <Select value={agencia} onValueChange={setAgencia}>
+                <SelectTrigger><SelectValue placeholder="Elegí una agencia" /></SelectTrigger>
+                <SelectContent>
+                  {AGENCIAS.map((a) => (
+                    <SelectItem key={a} value={a}>{a}</SelectItem>
+                  ))}
+                  <SelectItem value="__manual__">Otra (ingresar manualmente)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {agencia === "__manual__" && (
+              <div className="space-y-1.5">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Nombre de la agencia</Label>
+                <Input
+                  autoFocus
+                  value={agenciaManual}
+                  onChange={(e) => setAgenciaManual(e.target.value)}
+                  placeholder="Ej: Sucursal Famatina"
+                />
+              </div>
+            )}
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-2">
             <Button variant="ghost" onClick={() => setPlanillaOpen(false)}>
               <X className="mr-1 h-4 w-4" /> Cancelar
             </Button>
             <Button
+              disabled={!agenciaFinal}
               onClick={() => {
-                downloadPlanillaBlancoPDF(agencia);
+                downloadPlanillaBlancoPDF(agenciaFinal);
                 setPlanillaOpen(false);
                 toast.success("Planilla generada");
               }}
