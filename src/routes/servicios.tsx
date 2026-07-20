@@ -20,7 +20,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { AGENCIAS, downloadPlanillaBlancoPDF } from "@/lib/planilla-blanco-pdf";
+import { downloadPlanillaBlancoPDF } from "@/lib/planilla-blanco-pdf";
 
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
