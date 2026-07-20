@@ -235,57 +235,6 @@ function ServiciosPage() {
         </div>
       </div>
 
-      <Dialog open={planillaOpen} onOpenChange={setPlanillaOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Planilla en blanco (PDF)</DialogTitle>
-            <DialogDescription>
-              Elegí la agencia. Se descarga un PDF listo para imprimir y completar a mano.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Agencia predefinida</Label>
-              <Select value={agencia} onValueChange={setAgencia}>
-                <SelectTrigger><SelectValue placeholder="Elegí una agencia" /></SelectTrigger>
-                <SelectContent>
-                  {AGENCIAS.map((a) => (
-                    <SelectItem key={a} value={a}>{a}</SelectItem>
-                  ))}
-                  <SelectItem value="__manual__">Otra (ingresar manualmente)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {agencia === "__manual__" && (
-              <div className="space-y-1.5">
-                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Nombre de la agencia</Label>
-                <Input
-                  autoFocus
-                  value={agenciaManual}
-                  onChange={(e) => setAgenciaManual(e.target.value)}
-                  placeholder="Ej: Sucursal Famatina"
-                />
-              </div>
-            )}
-          </div>
-          <DialogFooter className="gap-2 sm:gap-2">
-            <Button variant="ghost" onClick={() => setPlanillaOpen(false)}>
-              <X className="mr-1 h-4 w-4" /> Cancelar
-            </Button>
-            <Button
-              disabled={!agenciaFinal}
-              onClick={() => {
-                downloadPlanillaBlancoPDF(agenciaFinal);
-                setPlanillaOpen(false);
-                toast.success("Planilla generada");
-              }}
-              className="bg-gradient-brand text-primary-foreground hover:opacity-90"
-            >
-              <FileDown className="mr-1 h-4 w-4" /> Descargar PDF
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </AppShell>
   );
 }
