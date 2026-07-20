@@ -1,17 +1,6 @@
 import { jsPDF } from "jspdf";
 
-export const AGENCIAS = [
-  "Casa Central - La Rioja",
-  "Sucursal Chilecito",
-  "Sucursal Chamical",
-  "Sucursal Chepes",
-  "Sucursal Aimogasta",
-  "Sucursal Villa Unión",
-] as const;
-
-export type Agencia = (typeof AGENCIAS)[number];
-
-export function downloadPlanillaBlancoPDF(agencia: string) {
+export function downloadPlanillaBlancoPDF() {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
