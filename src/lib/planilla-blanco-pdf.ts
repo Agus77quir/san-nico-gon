@@ -29,7 +29,7 @@ export function downloadPlanillaBlancoPDF() {
   doc.text("AGENCIA:", M + 8, y + 14);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
-  doc.text(agencia || "________________________________________", M + 70, y + 14);
+  line(doc, M + 70, y + 15, W - M - 8);
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
