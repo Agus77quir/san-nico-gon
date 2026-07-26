@@ -21,6 +21,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { downloadPlanillaBlancoPDF } from "@/lib/planilla-blanco-pdf";
+import { downloadPlanillaCompletaPDF } from "@/lib/planilla-completa-pdf";
 
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
