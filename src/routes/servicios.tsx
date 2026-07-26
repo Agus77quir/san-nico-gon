@@ -21,6 +21,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { downloadPlanillaBlancoPDF } from "@/lib/planilla-blanco-pdf";
+import { downloadPlanillaCompletaPDF } from "@/lib/planilla-completa-pdf";
 
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -136,6 +137,12 @@ function ServiciosPage() {
             onClick={() => { downloadPlanillaBlancoPDF(); toast.success("Planilla descargada"); }}
           >
             <FileText className="mr-2 h-4 w-4" /> Planilla en blanco
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => { downloadPlanillaCompletaPDF(); toast.success("Planilla completa descargada"); }}
+          >
+            <FileText className="mr-2 h-4 w-4" /> Planilla completa
           </Button>
           <Button
             onClick={() => setEditing(emptySolicitud())}
