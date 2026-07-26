@@ -143,6 +143,7 @@ function ServiciosPage() {
             onClick={() => { downloadPlanillaCompletaPDF(); toast.success("Planilla completa descargada"); }}
           >
             <FileText className="mr-2 h-4 w-4" /> Planilla completa
+          </Button>
           <Button
             onClick={() => setEditing(emptySolicitud())}
             className="bg-gradient-brand text-primary-foreground hover:opacity-90"
