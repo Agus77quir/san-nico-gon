@@ -428,9 +428,7 @@ export async function downloadPlanillaCompletaPDF() {
   rowFields([
     { label: "Observaciones del destino (traslado, dirección, cremación, urna, etc.)", w: 4 },
   ]);
-  responsable("1 del cementerio / inhumación");
-  responsable("2 del cementerio / inhumación");
-  responsable("3 del cementerio / inhumación");
+  responsable("del cementerio / inhumación");
 
   // ---------- Coche fúnebre ----------
   section("Servicio de calle — Coche fúnebre y unidades");
