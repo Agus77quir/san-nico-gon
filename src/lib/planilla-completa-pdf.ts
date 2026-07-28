@@ -6,7 +6,23 @@ import { jsPDF } from "jspdf";
  * detalle de facturación, documentación, testigos y control de calidad.
  * Cementerios: Parque Cementerio Renacimiento y Chilecito.
  */
-export function downloadPlanillaCompletaPDF() {
+async function loadLogoDataUrl(): Promise<string | null> {
+  try {
+    const res = await fetch("/logo.png");
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result as string);
+      r.onerror = reject;
+      r.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+export async function downloadPlanillaCompletaPDF() {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
@@ -16,21 +32,31 @@ export function downloadPlanillaCompletaPDF() {
   // ---------- Encabezado ----------
   doc.setFillColor(20, 40, 90);
   doc.rect(M, y, W - M * 2, 54, "F");
+
+  const logoData = await loadLogoDataUrl();
+  if (logoData) {
+    try {
+      doc.addImage(logoData, "PNG", M + 8, y + 7, 40, 40);
+    } catch {
+      /* ignore */
+    }
+  }
+
   doc.setTextColor(255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
-  doc.text("SAN NICOLÁS · RENACIMIENTO", M + 12, y + 20);
+  doc.text("SN · RENACIMIENTO · PARQUE", M + 56, y + 20);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.text(
     "Planilla completa de Solicitud de Servicio — para completar a mano",
-    M + 12,
+    M + 56,
     y + 34,
   );
   doc.setFontSize(8);
   doc.text(
     "Con asignación de responsables por área, documentación, facturación y control",
-    M + 12,
+    M + 56,
     y + 46,
   );
   doc.setTextColor(0);
@@ -165,28 +191,45 @@ export function downloadPlanillaCompletaPDF() {
   };
 
   const responsable = (area: string) => {
-    ensure(34);
+    ensure(38);
     doc.setFillColor(250, 245, 230);
     doc.setDrawColor(210, 190, 140);
-    doc.rect(M, y, W - M * 2, 32, "FD");
+    doc.rect(M, y, W - M * 2, 36, "FD");
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
     doc.setTextColor(120, 85, 20);
     doc.text(`RESPONSABLE ${area.toUpperCase()}`, M + 6, y + 9);
+
+    // Selector N°: 1 / 2 / 3
+    doc.setTextColor(90);
+    doc.setFontSize(7);
+    const nLabel = "N°:";
+    let nx = M + 6 + doc.getTextWidth(`RESPONSABLE ${area.toUpperCase()}`) + 14;
+    doc.text(nLabel, nx, y + 9);
+    nx += doc.getTextWidth(nLabel) + 4;
+    doc.setDrawColor(150);
+    ["1", "2", "3"].forEach((n) => {
+      doc.rect(nx, y + 3, 8, 8);
+      doc.setFont("helvetica", "normal");
+      doc.text(n, nx + 12, y + 9);
+      doc.setFont("helvetica", "bold");
+      nx += 22;
+    });
+
     doc.setTextColor(0);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7);
     doc.setTextColor(90);
-    doc.text("NOMBRE Y APELLIDO", M + 6, y + 18);
-    doc.text("DNI", M + (W - M * 2) * 0.45, y + 18);
-    doc.text("HORA", M + (W - M * 2) * 0.6, y + 18);
-    doc.text("FIRMA", M + (W - M * 2) * 0.75, y + 18);
+    doc.text("NOMBRE Y APELLIDO", M + 6, y + 22);
+    doc.text("DNI", M + (W - M * 2) * 0.45, y + 22);
+    doc.text("HORA", M + (W - M * 2) * 0.6, y + 22);
+    doc.text("FIRMA", M + (W - M * 2) * 0.75, y + 22);
     doc.setTextColor(0);
-    line(doc, M + 6, y + 28, M + (W - M * 2) * 0.43);
-    line(doc, M + (W - M * 2) * 0.45, y + 28, M + (W - M * 2) * 0.58);
-    line(doc, M + (W - M * 2) * 0.6, y + 28, M + (W - M * 2) * 0.73);
-    line(doc, M + (W - M * 2) * 0.75, y + 28, W - M - 6);
-    y += 34;
+    line(doc, M + 6, y + 32, M + (W - M * 2) * 0.43);
+    line(doc, M + (W - M * 2) * 0.45, y + 32, M + (W - M * 2) * 0.58);
+    line(doc, M + (W - M * 2) * 0.6, y + 32, M + (W - M * 2) * 0.73);
+    line(doc, M + (W - M * 2) * 0.75, y + 32, W - M - 6);
+    y += 38;
   };
 
   // ---------- Solicitante ----------
@@ -385,9 +428,7 @@ export function downloadPlanillaCompletaPDF() {
   rowFields([
     { label: "Observaciones del destino (traslado, dirección, cremación, urna, etc.)", w: 4 },
   ]);
-  responsable("1 del cementerio / inhumación");
-  responsable("2 del cementerio / inhumación");
-  responsable("3 del cementerio / inhumación");
+  responsable("del cementerio / inhumación");
 
   // ---------- Coche fúnebre ----------
   section("Servicio de calle — Coche fúnebre y unidades");

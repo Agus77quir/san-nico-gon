@@ -140,7 +140,7 @@ function ServiciosPage() {
           </Button>
           <Button
             variant="outline"
-            onClick={() => { downloadPlanillaCompletaPDF(); toast.success("Planilla completa descargada"); }}
+            onClick={async () => { await downloadPlanillaCompletaPDF(); toast.success("Planilla completa descargada"); }}
           >
             <FileText className="mr-2 h-4 w-4" /> Planilla completa
           </Button>
