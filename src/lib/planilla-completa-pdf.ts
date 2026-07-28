@@ -78,37 +78,24 @@ export async function downloadPlanillaCompletaPDF() {
   // ---------- Cabecera ----------
   doc.setDrawColor(180);
   doc.setLineWidth(0.6);
-  doc.rect(M, y, W - M * 2, 78);
+  doc.rect(M, y, W - M * 2, 60);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
-  doc.text("AGENCIA:", M + 8, y + 14);
-  line(doc, M + 70, y + 15, M + 320);
-  doc.text("CÓDIGO AGENCIA:", M + 340, y + 14);
-  line(doc, M + 430, y + 15, W - M - 8);
+  doc.text("AGENCIA:", M + 8, y + 16);
+  line(doc, M + 70, y + 17, W - M - 8);
 
-  doc.setFont("helvetica", "italic");
-  doc.setFontSize(7);
-  doc.setTextColor(110);
-  doc.text(
-    "Códigos de agencia — Ag. 1: 1001+   ·   Ag. 2: 20001+   ·   Ag. 3: 30001+   ·   Ag. 4: 40001+   (correlativo por agencia)",
-    M + 8,
-    y + 28,
-  );
-  doc.setTextColor(0);
-  doc.setFont("helvetica", "bold");
+  doc.text("N° PLANILLA:", M + 8, y + 34);
+  doc.text("FECHA:", M + 220, y + 34);
+  doc.text("HORA:", M + 360, y + 34);
+  line(doc, M + 78, y + 35, M + 210);
+  line(doc, M + 260, y + 35, M + 350);
+  line(doc, M + 400, y + 35, M + 500);
 
-  doc.text("N° PLANILLA:", M + 8, y + 46);
-  doc.text("FECHA:", M + 220, y + 46);
-  doc.text("HORA:", M + 360, y + 46);
-  line(doc, M + 78, y + 47, M + 210);
-  line(doc, M + 260, y + 47, M + 350);
-  line(doc, M + 400, y + 47, M + 500);
-
-  doc.text("N° EXPEDIENTE:", M + 8, y + 66);
-  doc.text("N° CONTRATO / ORDEN:", M + 220, y + 66);
-  line(doc, M + 90, y + 67, M + 210);
-  line(doc, M + 340, y + 67, W - M - 8);
-  y += 86;
+  doc.text("N° EXPEDIENTE:", M + 8, y + 52);
+  doc.text("N° CONTRATO / ORDEN:", M + 220, y + 52);
+  line(doc, M + 90, y + 53, M + 210);
+  line(doc, M + 340, y + 53, W - M - 8);
+  y += 68;
 
   // ---------- Helpers ----------
   const GAP = 5;
@@ -240,17 +227,26 @@ export async function downloadPlanillaCompletaPDF() {
     doc.setTextColor(90);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7);
-    doc.text("NOMBRE Y APELLIDO", M + 6, labelY);
-    doc.text("DNI", M + (W - M * 2) * 0.45, labelY);
-    doc.text("HORA", M + (W - M * 2) * 0.6, labelY);
-    doc.text("FIRMA", M + (W - M * 2) * 0.75, labelY);
-    doc.setTextColor(0);
-
-    // Líneas de firma
-    line(doc, M + 6, lineY, M + (W - M * 2) * 0.43);
-    line(doc, M + (W - M * 2) * 0.45, lineY, M + (W - M * 2) * 0.58);
-    line(doc, M + (W - M * 2) * 0.6, lineY, M + (W - M * 2) * 0.73);
-    line(doc, M + (W - M * 2) * 0.75, lineY, W - M - 6);
+    if (multi) {
+      // Solicitante/contratante: sin DNI (se completa abajo), más espacio para nombre
+      doc.text("NOMBRE Y APELLIDO", M + 6, labelY);
+      doc.text("HORA", M + (W - M * 2) * 0.65, labelY);
+      doc.text("FIRMA", M + (W - M * 2) * 0.8, labelY);
+      doc.setTextColor(0);
+      line(doc, M + 6, lineY, M + (W - M * 2) * 0.62);
+      line(doc, M + (W - M * 2) * 0.65, lineY, M + (W - M * 2) * 0.78);
+      line(doc, M + (W - M * 2) * 0.8, lineY, W - M - 6);
+    } else {
+      doc.text("NOMBRE Y APELLIDO", M + 6, labelY);
+      doc.text("DNI", M + (W - M * 2) * 0.45, labelY);
+      doc.text("HORA", M + (W - M * 2) * 0.6, labelY);
+      doc.text("FIRMA", M + (W - M * 2) * 0.75, labelY);
+      doc.setTextColor(0);
+      line(doc, M + 6, lineY, M + (W - M * 2) * 0.43);
+      line(doc, M + (W - M * 2) * 0.45, lineY, M + (W - M * 2) * 0.58);
+      line(doc, M + (W - M * 2) * 0.6, lineY, M + (W - M * 2) * 0.73);
+      line(doc, M + (W - M * 2) * 0.75, lineY, W - M - 6);
+    }
     y += blockH + 4;
   };
 
@@ -314,9 +310,9 @@ export async function downloadPlanillaCompletaPDF() {
     { label: "Ocupación", w: 1.4 },
   ]);
   rowFields([
-    { label: "Fecha de fallecimiento", w: 1.2 },
-    { label: "Hora de fallecimiento", w: 1 },
-    { label: "Causa (según certificado)", w: 2.2 },
+    { label: "Fecha de fallecimiento", w: 1.3 },
+    { label: "Hora de fallecimiento", w: 1.5 },
+    { label: "Causa (según certificado)", w: 2.4 },
     { label: "N° acta / defunción", w: 1.4 },
   ]);
   checkboxes("Lugar de fallecimiento", [
