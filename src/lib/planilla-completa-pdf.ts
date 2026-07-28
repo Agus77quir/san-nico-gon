@@ -6,7 +6,23 @@ import { jsPDF } from "jspdf";
  * detalle de facturación, documentación, testigos y control de calidad.
  * Cementerios: Parque Cementerio Renacimiento y Chilecito.
  */
-export function downloadPlanillaCompletaPDF() {
+async function loadLogoDataUrl(): Promise<string | null> {
+  try {
+    const res = await fetch("/logo.png");
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result as string);
+      r.onerror = reject;
+      r.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+export async function downloadPlanillaCompletaPDF() {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
@@ -16,21 +32,31 @@ export function downloadPlanillaCompletaPDF() {
   // ---------- Encabezado ----------
   doc.setFillColor(20, 40, 90);
   doc.rect(M, y, W - M * 2, 54, "F");
+
+  const logoData = await loadLogoDataUrl();
+  if (logoData) {
+    try {
+      doc.addImage(logoData, "PNG", M + 8, y + 7, 40, 40);
+    } catch {
+      /* ignore */
+    }
+  }
+
   doc.setTextColor(255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
-  doc.text("SAN NICOLÁS · RENACIMIENTO", M + 12, y + 20);
+  doc.text("SN · RENACIMIENTO · PARQUE", M + 56, y + 20);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.text(
     "Planilla completa de Solicitud de Servicio — para completar a mano",
-    M + 12,
+    M + 56,
     y + 34,
   );
   doc.setFontSize(8);
   doc.text(
     "Con asignación de responsables por área, documentación, facturación y control",
-    M + 12,
+    M + 56,
     y + 46,
   );
   doc.setTextColor(0);
