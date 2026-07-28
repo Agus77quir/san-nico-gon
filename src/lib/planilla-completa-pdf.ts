@@ -401,8 +401,6 @@ export async function downloadPlanillaCompletaPDF() {
     "Café / infusiones",
     "Buffet",
     "Ambientación",
-    "Música",
-    "Livestream",
   ]);
   responsable("de sala velatoria");
 
@@ -420,9 +418,9 @@ export async function downloadPlanillaCompletaPDF() {
   // ---------- Cementerio ----------
   section("Cementerio / destino final");
   checkboxes("Cementerio", [
-    "San Nicolás",
     "Renacimiento",
     "Parque",
+    "Chilecito",
   ]);
   checkboxes("Modalidad", [
     "Sepultura",
