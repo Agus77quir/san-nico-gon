@@ -39,24 +39,37 @@ export function downloadPlanillaCompletaPDF() {
   // ---------- Cabecera ----------
   doc.setDrawColor(180);
   doc.setLineWidth(0.6);
-  doc.rect(M, y, W - M * 2, 60);
+  doc.rect(M, y, W - M * 2, 78);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.text("AGENCIA:", M + 8, y + 14);
-  line(doc, M + 70, y + 15, W - M - 8);
+  line(doc, M + 70, y + 15, M + 320);
+  doc.text("CÓDIGO AGENCIA:", M + 340, y + 14);
+  line(doc, M + 430, y + 15, W - M - 8);
 
-  doc.text("N° PLANILLA:", M + 8, y + 32);
-  doc.text("FECHA:", M + 220, y + 32);
-  doc.text("HORA:", M + 360, y + 32);
-  line(doc, M + 78, y + 33, M + 210);
-  line(doc, M + 260, y + 33, M + 350);
-  line(doc, M + 400, y + 33, M + 500);
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(7);
+  doc.setTextColor(110);
+  doc.text(
+    "Códigos de agencia — Ag. 1: 1001+   ·   Ag. 2: 20001+   ·   Ag. 3: 30001+   ·   Ag. 4: 40001+   (correlativo por agencia)",
+    M + 8,
+    y + 28,
+  );
+  doc.setTextColor(0);
+  doc.setFont("helvetica", "bold");
 
-  doc.text("N° EXPEDIENTE:", M + 8, y + 52);
-  doc.text("N° CONTRATO / ORDEN:", M + 220, y + 52);
-  line(doc, M + 90, y + 53, M + 210);
-  line(doc, M + 340, y + 53, W - M - 8);
-  y += 68;
+  doc.text("N° PLANILLA:", M + 8, y + 46);
+  doc.text("FECHA:", M + 220, y + 46);
+  doc.text("HORA:", M + 360, y + 46);
+  line(doc, M + 78, y + 47, M + 210);
+  line(doc, M + 260, y + 47, M + 350);
+  line(doc, M + 400, y + 47, M + 500);
+
+  doc.text("N° EXPEDIENTE:", M + 8, y + 66);
+  doc.text("N° CONTRATO / ORDEN:", M + 220, y + 66);
+  line(doc, M + 90, y + 67, M + 210);
+  line(doc, M + 340, y + 67, W - M - 8);
+  y += 86;
 
   // ---------- Helpers ----------
   const GAP = 5;
