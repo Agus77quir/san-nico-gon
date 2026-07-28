@@ -39,24 +39,37 @@ export function downloadPlanillaCompletaPDF() {
   // ---------- Cabecera ----------
   doc.setDrawColor(180);
   doc.setLineWidth(0.6);
-  doc.rect(M, y, W - M * 2, 60);
+  doc.rect(M, y, W - M * 2, 78);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.text("AGENCIA:", M + 8, y + 14);
-  line(doc, M + 70, y + 15, W - M - 8);
+  line(doc, M + 70, y + 15, M + 320);
+  doc.text("CÓDIGO AGENCIA:", M + 340, y + 14);
+  line(doc, M + 430, y + 15, W - M - 8);
 
-  doc.text("N° PLANILLA:", M + 8, y + 32);
-  doc.text("FECHA:", M + 220, y + 32);
-  doc.text("HORA:", M + 360, y + 32);
-  line(doc, M + 78, y + 33, M + 210);
-  line(doc, M + 260, y + 33, M + 350);
-  line(doc, M + 400, y + 33, M + 500);
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(7);
+  doc.setTextColor(110);
+  doc.text(
+    "Códigos de agencia — Ag. 1: 1001+   ·   Ag. 2: 20001+   ·   Ag. 3: 30001+   ·   Ag. 4: 40001+   (correlativo por agencia)",
+    M + 8,
+    y + 28,
+  );
+  doc.setTextColor(0);
+  doc.setFont("helvetica", "bold");
 
-  doc.text("N° EXPEDIENTE:", M + 8, y + 52);
-  doc.text("N° CONTRATO / ORDEN:", M + 220, y + 52);
-  line(doc, M + 90, y + 53, M + 210);
-  line(doc, M + 340, y + 53, W - M - 8);
-  y += 68;
+  doc.text("N° PLANILLA:", M + 8, y + 46);
+  doc.text("FECHA:", M + 220, y + 46);
+  doc.text("HORA:", M + 360, y + 46);
+  line(doc, M + 78, y + 47, M + 210);
+  line(doc, M + 260, y + 47, M + 350);
+  line(doc, M + 400, y + 47, M + 500);
+
+  doc.text("N° EXPEDIENTE:", M + 8, y + 66);
+  doc.text("N° CONTRATO / ORDEN:", M + 220, y + 66);
+  line(doc, M + 90, y + 67, M + 210);
+  line(doc, M + 340, y + 67, W - M - 8);
+  y += 86;
 
   // ---------- Helpers ----------
   const GAP = 5;
@@ -107,24 +120,48 @@ export function downloadPlanillaCompletaPDF() {
   };
 
   const checkboxes = (label: string, opts: string[]) => {
-    ensure(24);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    const labelText = label.toUpperCase() + ":";
+    const labelW = doc.getTextWidth(labelText);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    const maxRight = W - M - 6;
+    const rows: string[][] = [[]];
+    let curX = M + 8 + labelW + 10;
+    const startX = curX;
+    opts.forEach((opt) => {
+      const w = 13 + doc.getTextWidth(opt) + 16;
+      if (curX + w > maxRight && rows[rows.length - 1].length > 0) {
+        rows.push([]);
+        curX = M + 12;
+      }
+      rows[rows.length - 1].push(opt);
+      curX += w;
+    });
+    const rowH = 16;
+    const totalH = Math.max(20, rows.length * rowH + 4);
+    ensure(totalH + 4);
     doc.setDrawColor(170);
     doc.setLineWidth(0.5);
-    doc.rect(M, y, W - M * 2, 20);
+    doc.rect(M, y, W - M * 2, totalH);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
     doc.setTextColor(60);
-    doc.text(label.toUpperCase() + ":", M + 6, y + 13);
-    let x = M + 8 + doc.getTextWidth(label + ":") + 10;
+    doc.text(labelText, M + 6, y + 13);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0);
     doc.setFontSize(9);
-    opts.forEach((opt) => {
-      doc.rect(x, y + 6, 9, 9);
-      doc.text(opt, x + 13, y + 13);
-      x += 13 + doc.getTextWidth(opt) + 16;
+    rows.forEach((row, ri) => {
+      let x = ri === 0 ? startX : M + 12;
+      const yy = y + 6 + ri * rowH;
+      row.forEach((opt) => {
+        doc.rect(x, yy, 9, 9);
+        doc.text(opt, x + 13, yy + 7);
+        x += 13 + doc.getTextWidth(opt) + 16;
+      });
     });
-    y += 24;
+    y += totalH + 4;
   };
 
   const responsable = (area: string) => {
@@ -154,6 +191,7 @@ export function downloadPlanillaCompletaPDF() {
 
   // ---------- Solicitante ----------
   section("Datos del solicitante / firmante");
+  checkboxes("Actúa como", ["Firmante", "Contratante", "Socio", "Particular", "Familiar", "Apoderado"]);
   rowFields([
     { label: "Apellido y nombre", w: 3 },
     { label: "DNI", w: 1.2 },
@@ -178,8 +216,9 @@ export function downloadPlanillaCompletaPDF() {
     { label: "Tel. trabajo", w: 1.2 },
   ]);
   rowFields([
-    { label: "N° de socio", w: 1 },
-    { label: "Titular del servicio", w: 2.5 },
+    { label: "N° de afiliado", w: 1.2 },
+    { label: "N° de socio", w: 1.2 },
+    { label: "Titular del servicio", w: 2.4 },
     { label: "CUIT / CUIL", w: 1.4 },
     { label: "Estado civil", w: 1 },
   ]);
@@ -319,8 +358,9 @@ export function downloadPlanillaCompletaPDF() {
   // ---------- Cementerio ----------
   section("Cementerio / destino final");
   checkboxes("Cementerio", [
-    "Parque Cementerio Renacimiento",
-    "Chilecito",
+    "San Nicolás",
+    "Renacimiento",
+    "Parque",
   ]);
   checkboxes("Modalidad", [
     "Sepultura",
@@ -345,7 +385,9 @@ export function downloadPlanillaCompletaPDF() {
   rowFields([
     { label: "Observaciones del destino (traslado, dirección, cremación, urna, etc.)", w: 4 },
   ]);
-  responsable("del cementerio / inhumación");
+  responsable("1 del cementerio / inhumación");
+  responsable("2 del cementerio / inhumación");
+  responsable("3 del cementerio / inhumación");
 
   // ---------- Coche fúnebre ----------
   section("Servicio de calle — Coche fúnebre y unidades");
@@ -446,16 +488,6 @@ export function downloadPlanillaCompletaPDF() {
     { label: "Observaciones (rasgos, cabello, prótesis, joyas, etc.)", w: 4 },
   ]);
   responsable("de preparación / tanatopraxia");
-
-  // ---------- Publicaciones ----------
-  section("Publicaciones / avisos");
-  checkboxes("Medios", ["Diario", "Radio", "Redes sociales", "Web propia", "Otros"]);
-  rowFields([
-    { label: "Diario / medio", w: 2 },
-    { label: "Fecha publicación", w: 1.2 },
-    { label: "Texto / aviso", w: 3 },
-  ]);
-  responsable("de publicaciones");
 
   // ---------- Personal ----------
   section("Personal interviniente");
