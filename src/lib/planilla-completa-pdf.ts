@@ -310,9 +310,9 @@ export async function downloadPlanillaCompletaPDF() {
     { label: "Ocupación", w: 1.4 },
   ]);
   rowFields([
-    { label: "Fecha de fallecimiento", w: 1.2 },
-    { label: "Hora de fallecimiento", w: 1 },
-    { label: "Causa (según certificado)", w: 2.2 },
+    { label: "Fecha de fallecimiento", w: 1.3 },
+    { label: "Hora de fallecimiento", w: 1.5 },
+    { label: "Causa (según certificado)", w: 2.4 },
     { label: "N° acta / defunción", w: 1.4 },
   ]);
   checkboxes("Lugar de fallecimiento", [
