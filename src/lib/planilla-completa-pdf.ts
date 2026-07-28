@@ -107,24 +107,48 @@ export function downloadPlanillaCompletaPDF() {
   };
 
   const checkboxes = (label: string, opts: string[]) => {
-    ensure(24);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    const labelText = label.toUpperCase() + ":";
+    const labelW = doc.getTextWidth(labelText);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    const maxRight = W - M - 6;
+    const rows: string[][] = [[]];
+    let curX = M + 8 + labelW + 10;
+    const startX = curX;
+    opts.forEach((opt) => {
+      const w = 13 + doc.getTextWidth(opt) + 16;
+      if (curX + w > maxRight && rows[rows.length - 1].length > 0) {
+        rows.push([]);
+        curX = M + 12;
+      }
+      rows[rows.length - 1].push(opt);
+      curX += w;
+    });
+    const rowH = 16;
+    const totalH = Math.max(20, rows.length * rowH + 4);
+    ensure(totalH + 4);
     doc.setDrawColor(170);
     doc.setLineWidth(0.5);
-    doc.rect(M, y, W - M * 2, 20);
+    doc.rect(M, y, W - M * 2, totalH);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
     doc.setTextColor(60);
-    doc.text(label.toUpperCase() + ":", M + 6, y + 13);
-    let x = M + 8 + doc.getTextWidth(label + ":") + 10;
+    doc.text(labelText, M + 6, y + 13);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0);
     doc.setFontSize(9);
-    opts.forEach((opt) => {
-      doc.rect(x, y + 6, 9, 9);
-      doc.text(opt, x + 13, y + 13);
-      x += 13 + doc.getTextWidth(opt) + 16;
+    rows.forEach((row, ri) => {
+      let x = ri === 0 ? startX : M + 12;
+      const yy = y + 6 + ri * rowH;
+      row.forEach((opt) => {
+        doc.rect(x, yy, 9, 9);
+        doc.text(opt, x + 13, yy + 7);
+        x += 13 + doc.getTextWidth(opt) + 16;
+      });
     });
-    y += 24;
+    y += totalH + 4;
   };
 
   const responsable = (area: string) => {
