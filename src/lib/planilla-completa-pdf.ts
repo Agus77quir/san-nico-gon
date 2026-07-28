@@ -246,10 +246,10 @@ export async function downloadPlanillaCompletaPDF() {
   checkboxes("Actúa como", ["Firmante", "Contratante", "Socio", "Particular", "Familiar", "Apoderado"]);
   responsable("del solicitante / contratante", true);
   rowFields([
-    { label: "Apellido y nombre", w: 3 },
-    { label: "DNI", w: 1.2 },
-    { label: "Fecha nac.", w: 1 },
-    { label: "Parentesco con el extinto", w: 1.6 },
+    { label: "DNI", w: 1.4 },
+    { label: "Fecha nac.", w: 1.2 },
+    { label: "Parentesco con el extinto", w: 2 },
+    { label: "Estado civil", w: 1.2 },
   ]);
   rowFields([
     { label: "Domicilio", w: 3 },
