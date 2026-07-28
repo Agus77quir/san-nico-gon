@@ -358,8 +358,9 @@ export function downloadPlanillaCompletaPDF() {
   // ---------- Cementerio ----------
   section("Cementerio / destino final");
   checkboxes("Cementerio", [
-    "Parque Cementerio Renacimiento",
-    "Chilecito",
+    "San Nicolás",
+    "Renacimiento",
+    "Parque",
   ]);
   checkboxes("Modalidad", [
     "Sepultura",
@@ -384,7 +385,9 @@ export function downloadPlanillaCompletaPDF() {
   rowFields([
     { label: "Observaciones del destino (traslado, dirección, cremación, urna, etc.)", w: 4 },
   ]);
-  responsable("del cementerio / inhumación");
+  responsable("1 del cementerio / inhumación");
+  responsable("2 del cementerio / inhumación");
+  responsable("3 del cementerio / inhumación");
 
   // ---------- Coche fúnebre ----------
   section("Servicio de calle — Coche fúnebre y unidades");
