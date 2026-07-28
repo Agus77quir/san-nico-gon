@@ -36,7 +36,20 @@ export async function downloadPlanillaCompletaPDF() {
   const logoData = await loadLogoDataUrl();
   if (logoData) {
     try {
-      doc.addImage(logoData, "PNG", M + 8, y + 7, 40, 40);
+      const img = new Image();
+      img.src = logoData;
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = reject;
+      });
+      const maxW = 40;
+      const maxH = 40;
+      const ratio = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight);
+      const w = img.naturalWidth * ratio;
+      const h = img.naturalHeight * ratio;
+      const x = M + 8 + (maxW - w) / 2;
+      const yy = y + 7 + (maxH - h) / 2;
+      doc.addImage(logoData, "PNG", x, yy, w, h);
     } catch {
       /* ignore */
     }
