@@ -274,6 +274,7 @@ export async function downloadPlanillaCompletaPDF() {
     { label: "CUIT / CUIL", w: 1.4 },
     { label: "Estado civil", w: 1 },
   ]);
+  responsable("del solicitante / contratante", true);
 
   // ---------- Extinto ----------
   section("Datos del extinto");
