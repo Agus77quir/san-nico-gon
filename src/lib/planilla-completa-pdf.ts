@@ -190,11 +190,12 @@ export async function downloadPlanillaCompletaPDF() {
     y += totalH + 4;
   };
 
-  const responsable = (area: string) => {
-    ensure(54);
+  const responsable = (area: string, multi = false) => {
+    const blockH = multi ? 50 : 36;
+    ensure(blockH + 4);
     doc.setFillColor(250, 245, 230);
     doc.setDrawColor(210, 190, 140);
-    doc.rect(M, y, W - M * 2, 50, "FD");
+    doc.rect(M, y, W - M * 2, blockH, "FD");
 
     // Título
     doc.setFont("helvetica", "bold");
@@ -202,38 +203,42 @@ export async function downloadPlanillaCompletaPDF() {
     doc.setTextColor(120, 85, 20);
     doc.text(`RESPONSABLE ${area.toUpperCase()}`, M + 6, y + 10);
 
-    // Selector N°: 1 / 2 / 3 (en línea separada, debajo del título)
-    doc.setTextColor(90);
-    doc.setFontSize(7);
-    const nLabel = "N°:";
-    let nx = M + 6;
-    doc.text(nLabel, nx, y + 23);
-    nx += doc.getTextWidth(nLabel) + 6;
-    doc.setDrawColor(150);
-    ["1", "2", "3"].forEach((n) => {
-      doc.rect(nx, y + 17, 8, 8);
-      doc.setFont("helvetica", "normal");
-      doc.text(n, nx + 12, y + 23);
-      doc.setFont("helvetica", "bold");
-      nx += 22;
-    });
+    if (multi) {
+      // Selector N°: 1 / 2 / 3 (solo para solicitante/firmante)
+      doc.setTextColor(90);
+      doc.setFontSize(7);
+      const nLabel = "N°:";
+      let nx = M + 6;
+      doc.text(nLabel, nx, y + 23);
+      nx += doc.getTextWidth(nLabel) + 6;
+      doc.setDrawColor(150);
+      ["1", "2", "3"].forEach((n) => {
+        doc.rect(nx, y + 17, 8, 8);
+        doc.setFont("helvetica", "normal");
+        doc.text(n, nx + 12, y + 23);
+        doc.setFont("helvetica", "bold");
+        nx += 22;
+      });
+    }
 
     // Etiquetas de firma
+    const labelY = multi ? y + 36 : y + 24;
+    const lineY = multi ? y + 46 : y + 32;
     doc.setTextColor(90);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7);
-    doc.text("NOMBRE Y APELLIDO", M + 6, y + 36);
-    doc.text("DNI", M + (W - M * 2) * 0.45, y + 36);
-    doc.text("HORA", M + (W - M * 2) * 0.6, y + 36);
-    doc.text("FIRMA", M + (W - M * 2) * 0.75, y + 36);
+    doc.text("NOMBRE Y APELLIDO", M + 6, labelY);
+    doc.text("DNI", M + (W - M * 2) * 0.45, labelY);
+    doc.text("HORA", M + (W - M * 2) * 0.6, labelY);
+    doc.text("FIRMA", M + (W - M * 2) * 0.75, labelY);
     doc.setTextColor(0);
 
     // Líneas de firma
-    line(doc, M + 6, y + 46, M + (W - M * 2) * 0.43);
-    line(doc, M + (W - M * 2) * 0.45, y + 46, M + (W - M * 2) * 0.58);
-    line(doc, M + (W - M * 2) * 0.6, y + 46, M + (W - M * 2) * 0.73);
-    line(doc, M + (W - M * 2) * 0.75, y + 46, W - M - 6);
-    y += 54;
+    line(doc, M + 6, lineY, M + (W - M * 2) * 0.43);
+    line(doc, M + (W - M * 2) * 0.45, lineY, M + (W - M * 2) * 0.58);
+    line(doc, M + (W - M * 2) * 0.6, lineY, M + (W - M * 2) * 0.73);
+    line(doc, M + (W - M * 2) * 0.75, lineY, W - M - 6);
+    y += blockH + 4;
   };
 
   // ---------- Solicitante ----------
@@ -269,6 +274,7 @@ export async function downloadPlanillaCompletaPDF() {
     { label: "CUIT / CUIL", w: 1.4 },
     { label: "Estado civil", w: 1 },
   ]);
+  responsable("del solicitante / contratante", true);
 
   // ---------- Extinto ----------
   section("Datos del extinto");
