@@ -233,7 +233,7 @@ export async function downloadPlanillaCompletaPDF() {
   };
 
   // ---------- Solicitante ----------
-  section("Datos del solicitante / firmante");
+  section("Datos del solicitante / contratante");
   checkboxes("Actúa como", ["Firmante", "Contratante", "Socio", "Particular", "Familiar", "Apoderado"]);
   rowFields([
     { label: "Apellido y nombre", w: 3 },
