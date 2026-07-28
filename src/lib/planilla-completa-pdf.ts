@@ -489,16 +489,6 @@ export function downloadPlanillaCompletaPDF() {
   ]);
   responsable("de preparación / tanatopraxia");
 
-  // ---------- Publicaciones ----------
-  section("Publicaciones / avisos");
-  checkboxes("Medios", ["Diario", "Radio", "Redes sociales", "Web propia", "Otros"]);
-  rowFields([
-    { label: "Diario / medio", w: 2 },
-    { label: "Fecha publicación", w: 1.2 },
-    { label: "Texto / aviso", w: 3 },
-  ]);
-  responsable("de publicaciones");
-
   // ---------- Personal ----------
   section("Personal interviniente");
   rowFields([
