@@ -227,17 +227,26 @@ export async function downloadPlanillaCompletaPDF() {
     doc.setTextColor(90);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7);
-    doc.text("NOMBRE Y APELLIDO", M + 6, labelY);
-    doc.text("DNI", M + (W - M * 2) * 0.45, labelY);
-    doc.text("HORA", M + (W - M * 2) * 0.6, labelY);
-    doc.text("FIRMA", M + (W - M * 2) * 0.75, labelY);
-    doc.setTextColor(0);
-
-    // Líneas de firma
-    line(doc, M + 6, lineY, M + (W - M * 2) * 0.43);
-    line(doc, M + (W - M * 2) * 0.45, lineY, M + (W - M * 2) * 0.58);
-    line(doc, M + (W - M * 2) * 0.6, lineY, M + (W - M * 2) * 0.73);
-    line(doc, M + (W - M * 2) * 0.75, lineY, W - M - 6);
+    if (multi) {
+      // Solicitante/contratante: sin DNI (se completa abajo), más espacio para nombre
+      doc.text("NOMBRE Y APELLIDO", M + 6, labelY);
+      doc.text("HORA", M + (W - M * 2) * 0.65, labelY);
+      doc.text("FIRMA", M + (W - M * 2) * 0.8, labelY);
+      doc.setTextColor(0);
+      line(doc, M + 6, lineY, M + (W - M * 2) * 0.62);
+      line(doc, M + (W - M * 2) * 0.65, lineY, M + (W - M * 2) * 0.78);
+      line(doc, M + (W - M * 2) * 0.8, lineY, W - M - 6);
+    } else {
+      doc.text("NOMBRE Y APELLIDO", M + 6, labelY);
+      doc.text("DNI", M + (W - M * 2) * 0.45, labelY);
+      doc.text("HORA", M + (W - M * 2) * 0.6, labelY);
+      doc.text("FIRMA", M + (W - M * 2) * 0.75, labelY);
+      doc.setTextColor(0);
+      line(doc, M + 6, lineY, M + (W - M * 2) * 0.43);
+      line(doc, M + (W - M * 2) * 0.45, lineY, M + (W - M * 2) * 0.58);
+      line(doc, M + (W - M * 2) * 0.6, lineY, M + (W - M * 2) * 0.73);
+      line(doc, M + (W - M * 2) * 0.75, lineY, W - M - 6);
+    }
     y += blockH + 4;
   };
 
