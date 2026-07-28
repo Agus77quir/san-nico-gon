@@ -191,45 +191,49 @@ export async function downloadPlanillaCompletaPDF() {
   };
 
   const responsable = (area: string) => {
-    ensure(38);
+    ensure(54);
     doc.setFillColor(250, 245, 230);
     doc.setDrawColor(210, 190, 140);
-    doc.rect(M, y, W - M * 2, 36, "FD");
+    doc.rect(M, y, W - M * 2, 50, "FD");
+
+    // Título
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
     doc.setTextColor(120, 85, 20);
-    doc.text(`RESPONSABLE ${area.toUpperCase()}`, M + 6, y + 9);
+    doc.text(`RESPONSABLE ${area.toUpperCase()}`, M + 6, y + 10);
 
-    // Selector N°: 1 / 2 / 3
+    // Selector N°: 1 / 2 / 3 (en línea separada, debajo del título)
     doc.setTextColor(90);
     doc.setFontSize(7);
     const nLabel = "N°:";
-    let nx = M + 6 + doc.getTextWidth(`RESPONSABLE ${area.toUpperCase()}`) + 14;
-    doc.text(nLabel, nx, y + 9);
-    nx += doc.getTextWidth(nLabel) + 4;
+    let nx = M + 6;
+    doc.text(nLabel, nx, y + 23);
+    nx += doc.getTextWidth(nLabel) + 6;
     doc.setDrawColor(150);
     ["1", "2", "3"].forEach((n) => {
-      doc.rect(nx, y + 3, 8, 8);
+      doc.rect(nx, y + 17, 8, 8);
       doc.setFont("helvetica", "normal");
-      doc.text(n, nx + 12, y + 9);
+      doc.text(n, nx + 12, y + 23);
       doc.setFont("helvetica", "bold");
       nx += 22;
     });
 
-    doc.setTextColor(0);
+    // Etiquetas de firma
+    doc.setTextColor(90);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7);
-    doc.setTextColor(90);
-    doc.text("NOMBRE Y APELLIDO", M + 6, y + 22);
-    doc.text("DNI", M + (W - M * 2) * 0.45, y + 22);
-    doc.text("HORA", M + (W - M * 2) * 0.6, y + 22);
-    doc.text("FIRMA", M + (W - M * 2) * 0.75, y + 22);
+    doc.text("NOMBRE Y APELLIDO", M + 6, y + 36);
+    doc.text("DNI", M + (W - M * 2) * 0.45, y + 36);
+    doc.text("HORA", M + (W - M * 2) * 0.6, y + 36);
+    doc.text("FIRMA", M + (W - M * 2) * 0.75, y + 36);
     doc.setTextColor(0);
-    line(doc, M + 6, y + 32, M + (W - M * 2) * 0.43);
-    line(doc, M + (W - M * 2) * 0.45, y + 32, M + (W - M * 2) * 0.58);
-    line(doc, M + (W - M * 2) * 0.6, y + 32, M + (W - M * 2) * 0.73);
-    line(doc, M + (W - M * 2) * 0.75, y + 32, W - M - 6);
-    y += 38;
+
+    // Líneas de firma
+    line(doc, M + 6, y + 46, M + (W - M * 2) * 0.43);
+    line(doc, M + (W - M * 2) * 0.45, y + 46, M + (W - M * 2) * 0.58);
+    line(doc, M + (W - M * 2) * 0.6, y + 46, M + (W - M * 2) * 0.73);
+    line(doc, M + (W - M * 2) * 0.75, y + 46, W - M - 6);
+    y += 54;
   };
 
   // ---------- Solicitante ----------
