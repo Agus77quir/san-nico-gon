@@ -191,6 +191,7 @@ export function downloadPlanillaCompletaPDF() {
 
   // ---------- Solicitante ----------
   section("Datos del solicitante / firmante");
+  checkboxes("Actúa como", ["Firmante", "Contratante", "Socio", "Particular", "Familiar", "Apoderado"]);
   rowFields([
     { label: "Apellido y nombre", w: 3 },
     { label: "DNI", w: 1.2 },
@@ -215,8 +216,9 @@ export function downloadPlanillaCompletaPDF() {
     { label: "Tel. trabajo", w: 1.2 },
   ]);
   rowFields([
-    { label: "N° de socio", w: 1 },
-    { label: "Titular del servicio", w: 2.5 },
+    { label: "N° de afiliado", w: 1.2 },
+    { label: "N° de socio", w: 1.2 },
+    { label: "Titular del servicio", w: 2.4 },
     { label: "CUIT / CUIL", w: 1.4 },
     { label: "Estado civil", w: 1 },
   ]);
