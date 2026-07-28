@@ -244,6 +244,7 @@ export async function downloadPlanillaCompletaPDF() {
   // ---------- Solicitante ----------
   section("Datos del solicitante / contratante");
   checkboxes("Actúa como", ["Firmante", "Contratante", "Socio", "Particular", "Familiar", "Apoderado"]);
+  responsable("del solicitante / contratante", true);
   rowFields([
     { label: "Apellido y nombre", w: 3 },
     { label: "DNI", w: 1.2 },
@@ -274,7 +275,6 @@ export async function downloadPlanillaCompletaPDF() {
     { label: "CUIT / CUIL", w: 1.4 },
     { label: "Estado civil", w: 1 },
   ]);
-  responsable("del solicitante / contratante", true);
 
   // ---------- Extinto ----------
   section("Datos del extinto");
